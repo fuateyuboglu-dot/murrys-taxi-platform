@@ -1,2 +1,7 @@
-export { emit, subscribe, unsubscribe } from './eventBus';
-export type { TaxiOsEventHandler, TaxiOsEventMap, TaxiOsEventName } from './eventBus';
+export { emit, getRecentEvents, subscribe, taxiOsEventNames, unsubscribe } from './eventBus';
+export type {
+  TaxiOsEventHandler,
+  TaxiOsEventLogEntry,
+  TaxiOsEventMap,
+  TaxiOsEventName,
+} from './eventBus';

@@ -30,7 +30,23 @@ export type TaxiOsEventName = keyof TaxiOsEventMap;
 export type TaxiOsEventHandler<EventName extends TaxiOsEventName> = (
   payload: TaxiOsEventMap[EventName],
 ) => void;
+export type TaxiOsEventLogEntry<EventName extends TaxiOsEventName = TaxiOsEventName> = {
+  id: string;
+  payload: TaxiOsEventMap[EventName];
+  timestamp: string;
+  type: EventName;
+};
 
+const MAX_EVENT_LOG_ENTRIES = 25;
+export const taxiOsEventNames: TaxiOsEventName[] = [
+  'driver_offline',
+  'driver_online',
+  'trip_assigned',
+  'trip_completed',
+  'trip_requested',
+  'trip_started',
+];
+const eventLog: TaxiOsEventLogEntry[] = [];
 const listeners = new Map<TaxiOsEventName, Set<TaxiOsEventHandler<TaxiOsEventName>>>();
 
 function getListeners<EventName extends TaxiOsEventName>(eventName: EventName) {
@@ -45,6 +61,17 @@ export function emit<EventName extends TaxiOsEventName>(
   eventName: EventName,
   payload: TaxiOsEventMap[EventName],
 ) {
+  eventLog.unshift({
+    id: `${eventName}-${Date.now()}-${eventLog.length}`,
+    payload,
+    timestamp: new Date().toISOString(),
+    type: eventName,
+  } as TaxiOsEventLogEntry);
+
+  if (eventLog.length > MAX_EVENT_LOG_ENTRIES) {
+    eventLog.length = MAX_EVENT_LOG_ENTRIES;
+  }
+
   getListeners(eventName).forEach((handler) => {
     handler(payload);
   });
@@ -64,4 +91,8 @@ export function unsubscribe<EventName extends TaxiOsEventName>(
   handler: TaxiOsEventHandler<EventName>,
 ) {
   getListeners(eventName).delete(handler);
+}
+
+export function getRecentEvents() {
+  return [...eventLog];
 }

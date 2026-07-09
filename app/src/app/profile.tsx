@@ -73,6 +73,8 @@ export default function ProfileScreen() {
           <Text style={styles.sectionTitle}>Developer only</Text>
           <Card style={styles.card}>
             <ProfileRow label="Driver App" onPress={() => router.push('/driver-login')} value="Temporary entry" />
+            <View style={styles.divider} />
+            <ProfileRow label="Debug Events" onPress={() => router.push('/debug-events')} value="Temporary log" />
           </Card>
         </View>
       </ScrollView>
