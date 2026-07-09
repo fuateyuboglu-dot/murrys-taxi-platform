@@ -1,21 +1,20 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Card, PrimaryButton, ScreenContainer } from '@/shared/components';
-import { getDriverState, getDriverStateLabel, setDriverState, type DriverState } from '@/domains/drivers';
+import { getDriverStateLabel, setDriverState } from '@/domains/drivers';
 import { getDemoTrip } from '@/domains/trips';
+import { useDriverStore } from '@/state';
 import { colors, radius, spacing } from '@/shared/theme';
 
 export default function DriverHomeScreen() {
-  const [driverState, setDriverStateView] = useState<DriverState>(() => getDriverState());
+  const driverState = useDriverStore((state) => state.driverState);
   const trip = getDemoTrip();
   const driver = trip.driver;
   const isOnline = driverState !== 'offline';
 
   function toggleDriverState() {
-    const nextState = setDriverState(isOnline ? 'offline' : 'waiting');
-    setDriverStateView(nextState);
+    setDriverState(isOnline ? 'offline' : 'waiting');
   }
 
   return (

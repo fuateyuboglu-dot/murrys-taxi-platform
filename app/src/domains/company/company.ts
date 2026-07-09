@@ -1,3 +1,5 @@
+import { initialDemoCompany, useCompanyStore } from '@/state/companyStore';
+
 export type Company = {
   currency: 'CAD';
   id: string;
@@ -14,22 +16,8 @@ export type Company = {
   website: string;
 };
 
-export const demoCompany: Company = {
-  currency: 'CAD',
-  id: 'murrys-taxi',
-  logo: 'placeholder',
-  name: 'Murrys Taxi',
-  pricingProfileId: 'murrys-standard',
-  primaryColor: '#FFC107',
-  secondaryColor: '#000000',
-  serviceArea: 'Arnprior, Ontario',
-  shortName: 'Murrys',
-  supportEmail: 'support@murrystaxi.demo',
-  supportPhone: '+1 613-295-9335',
-  timezone: 'America/Toronto',
-  website: 'https://murrystaxi.demo',
-};
+export const demoCompany: Company = initialDemoCompany;
 
 export function getActiveCompany() {
-  return demoCompany;
+  return useCompanyStore.getState().activeCompany;
 }

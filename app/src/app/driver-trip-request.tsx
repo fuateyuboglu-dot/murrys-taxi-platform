@@ -2,16 +2,25 @@ import { router } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Card, PrimaryButton, ScreenContainer, SecondaryButton } from '@/shared/components';
+import { dispatchTrip } from '@/domains/dispatch';
 import { setDriverState } from '@/domains/drivers';
 import { toFareRouteParams } from '@/domains/pricing';
 import { getSelectedDestinationFromParams, toDestinationRouteParams } from '@/domains/places';
 import { getDemoTrip } from '@/domains/trips';
+import { demoDrivers } from '@/shared/demo/demoData';
 import { colors, radius, spacing } from '@/shared/theme';
 
 export default function DriverTripRequestScreen() {
   const trip = getDemoTrip();
   const selectedDestination = getSelectedDestinationFromParams({});
-  const driver = trip.driver;
+  const dispatchResult = dispatchTrip({
+    availableDrivers: demoDrivers.map((driver) => ({
+      ...driver,
+      state: driver.id === trip.driver?.id ? 'waiting' : 'online',
+    })),
+    trip,
+  });
+  const driver = dispatchResult.recommendedDriver ?? trip.driver;
 
   return (
     <ScreenContainer contentStyle={styles.content}>

@@ -1,3 +1,5 @@
+import { useDriverStore } from '@/state/driverStore';
+
 export type DriverState =
   | 'offline'
   | 'online'
@@ -10,23 +12,19 @@ export type DriverState =
   | 'completed'
   | 'unavailable';
 
-let currentDriverState: DriverState = 'offline';
-
 export function setDriverState(nextState: DriverState) {
-  currentDriverState = nextState;
-
-  return currentDriverState;
+  return useDriverStore.getState().setDriverState(nextState);
 }
 
 export function getDriverState() {
-  return currentDriverState;
+  return useDriverStore.getState().driverState;
 }
 
-export function canReceiveTrips(state: DriverState = currentDriverState) {
+export function canReceiveTrips(state: DriverState = getDriverState()) {
   return state === 'online' || state === 'waiting';
 }
 
-export function getDriverStateLabel(state: DriverState = currentDriverState) {
+export function getDriverStateLabel(state: DriverState = getDriverState()) {
   const labels: Record<DriverState, string> = {
     accepted: 'Accepted',
     arriving: 'Arriving',
