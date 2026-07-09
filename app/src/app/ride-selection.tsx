@@ -1,21 +1,26 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { colors, radius, spacing } from '@/shared/theme';
 import { PrimaryButton, ScreenContainer } from '@/shared/components';
-import { demoArnpriorLocalFare } from '@/shared/demo/demoData';
+import { getSelectedDestinationFromParams, toDestinationRouteParams } from '@/domains/places';
+import { calculateFare, toFareRouteParams } from '@/domains/pricing';
 
-
-const rideOptions = [
-  {
-    id: 'standard',
-    name: 'Standard Taxi',
-    arrival: '4 min',
-    duration: '12 min',
-    price: demoArnpriorLocalFare.displayAmountWithCurrency,
-  },
-];
 
 export default function RideSelectionScreen() {
+  const routeParams = useLocalSearchParams();
+  const selectedDestination = getSelectedDestinationFromParams(routeParams);
+  const fareEstimate = calculateFare({ destination: selectedDestination });
+  const destinationParams = toDestinationRouteParams(selectedDestination);
+  const rideOptions = [
+    {
+      id: 'standard',
+      name: 'Standard Taxi',
+      arrival: '4 min',
+      duration: '12 min',
+      price: fareEstimate.displayAmountWithCurrency,
+    },
+  ];
+
   return (
     <ScreenContainer contentStyle={styles.content}>
         <View style={styles.topBar}>
@@ -47,7 +52,7 @@ export default function RideSelectionScreen() {
             <View style={styles.destinationMarker} />
             <View style={styles.routeCopy}>
               <Text style={styles.routeLabel}>Destination</Text>
-              <Text style={styles.routeValue}>Arnprior Shopping Centre</Text>
+              <Text style={styles.routeValue}>{selectedDestination.displayName}</Text>
             </View>
           </View>
         </View>
@@ -92,7 +97,15 @@ export default function RideSelectionScreen() {
         </ScrollView>
 
         <PrimaryButton
-          onPress={() => router.push('/booking-confirmation')}
+          onPress={() => {
+            router.push({
+              pathname: '/booking-confirmation',
+              params: {
+                ...destinationParams,
+                ...toFareRouteParams(fareEstimate),
+              },
+            });
+          }}
           pressedStyle={styles.buttonPressed}
           style={styles.continueButton}
           textStyle={styles.continueButtonText}>

@@ -1,11 +1,19 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { colors, radius, spacing } from '@/shared/theme';
 import { PrimaryButton, ScreenContainer, SecondaryButton } from '@/shared/components';
-import { demoArnpriorLocalFare, getSelectedDemoPaymentMethod } from '@/shared/demo/demoData';
+import { getSelectedDemoPaymentMethod } from '@/shared/demo/demoData';
+import { getSelectedDestinationFromParams, toDestinationRouteParams } from '@/domains/places';
+import { calculateFare, getFareFromParams, toFareRouteParams } from '@/domains/pricing';
 
 
 export default function BookingConfirmationScreen() {
+  const routeParams = useLocalSearchParams();
+  const selectedDestination = getSelectedDestinationFromParams(routeParams);
+  const fareEstimate = routeParams.fareAmountCents
+    ? getFareFromParams(routeParams)
+    : calculateFare({ destination: selectedDestination });
+  const destinationParams = toDestinationRouteParams(selectedDestination);
   const selectedPaymentMethod = getSelectedDemoPaymentMethod();
 
   return (
@@ -39,14 +47,14 @@ export default function BookingConfirmationScreen() {
             <View style={styles.destinationMarker} />
             <View style={styles.routeText}>
               <Text style={styles.label}>Destination</Text>
-              <Text style={styles.value}>Arnprior Shopping Centre</Text>
+              <Text style={styles.value}>{selectedDestination.displayName}</Text>
             </View>
           </View>
         </View>
 
         <View style={styles.detailsCard}>
           <DetailRow label="Ride type" value="Standard" />
-          <DetailRow label="Estimated fare" value={demoArnpriorLocalFare.displayAmountWithCurrency} />
+          <DetailRow label="Estimated fare" value={fareEstimate.displayAmountWithCurrency} />
           <DetailRow label="Payment" value={selectedPaymentMethod.label} />
         </View>
 
@@ -63,7 +71,15 @@ export default function BookingConfirmationScreen() {
 
         <View style={styles.actions}>
           <PrimaryButton
-            onPress={() => router.push('/searching-driver')}
+            onPress={() => {
+              router.push({
+                pathname: '/searching-driver',
+                params: {
+                  ...destinationParams,
+                  ...toFareRouteParams(fareEstimate),
+                },
+              });
+            }}
             pressedStyle={styles.buttonPressed}
             style={styles.primaryButton}
             textStyle={styles.primaryButtonText}>

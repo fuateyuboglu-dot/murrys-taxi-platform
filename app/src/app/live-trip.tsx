@@ -1,10 +1,15 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { assignedDemoDriver, demoArnpriorLocalFare } from '@/shared/demo/demoData';
+import { assignedDemoDriver } from '@/shared/demo/demoData';
 import { colors, radius, spacing } from '@/shared/theme';
 import { Map, PrimaryButton, ScreenContainer, SecondaryButton } from '@/shared/components';
 import { callDriver, messageDriver } from '@/shared/utils/driverContact';
+import { getSelectedDestinationFromParams, toDestinationRouteParams } from '@/domains/places';
+import { useUserLocation } from '@/shared/hooks/useUserLocation';
+import { locationService, type Route } from '@/domains/locations';
+import { calculateFare, getFareFromParams, toFareRouteParams } from '@/domains/pricing';
 
 
 const driverInitials = assignedDemoDriver.name
@@ -12,7 +17,83 @@ const driverInitials = assignedDemoDriver.name
   .map((namePart) => namePart.charAt(0))
   .join('');
 
+function formatRouteDuration(durationSeconds: number) {
+  const minutes = Math.max(1, Math.round(durationSeconds / 60));
+
+  return `${minutes} min`;
+}
+
+function formatRouteDistance(distanceMeters: number) {
+  if (distanceMeters >= 1000) {
+    return `${(distanceMeters / 1000).toFixed(1)} km`;
+  }
+
+  return `${Math.round(distanceMeters)} m`;
+}
+
 export default function LiveTripScreen() {
+  const routeParams = useLocalSearchParams();
+  const selectedDestination = getSelectedDestinationFromParams(routeParams);
+  const { userLocation } = useUserLocation();
+  const [route, setRoute] = useState<Route | null>(null);
+  const initialFare = routeParams.fareAmountCents
+    ? getFareFromParams(routeParams)
+    : calculateFare({ destination: selectedDestination });
+  const destinationCoordinates = selectedDestination.coordinates;
+  const destinationLatitude = destinationCoordinates?.latitude;
+  const destinationLongitude = destinationCoordinates?.longitude;
+  const pickupLatitude = userLocation.coordinates.latitude;
+  const pickupLongitude = userLocation.coordinates.longitude;
+  const destinationLocation = selectedDestination.coordinates
+    ? {
+        addressLabel: selectedDestination.displayName,
+        coordinates: selectedDestination.coordinates,
+        placeId: selectedDestination.placeId,
+        source: selectedDestination.source,
+      }
+    : undefined;
+  const fareEstimate = route
+    ? calculateFare({
+        destination: selectedDestination,
+        distanceMeters: route.distanceMeters,
+      })
+    : initialFare;
+  const destinationParams = toDestinationRouteParams(selectedDestination);
+  const routeEtaLabel = route ? formatRouteDuration(route.durationSeconds) : assignedDemoDriver.eta;
+  const routeDistanceLabel = route ? formatRouteDistance(route.distanceMeters) : 'Demo route';
+
+  useEffect(() => {
+    let isMounted = true;
+
+    if (
+      typeof destinationLatitude !== 'number' ||
+      typeof destinationLongitude !== 'number'
+    ) {
+      return;
+    }
+
+    void locationService
+      .getRoute(
+        {
+          latitude: pickupLatitude,
+          longitude: pickupLongitude,
+        },
+        {
+          latitude: destinationLatitude,
+          longitude: destinationLongitude,
+        },
+      )
+      .then((nextRoute) => {
+        if (isMounted) {
+          setRoute(nextRoute);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [destinationLatitude, destinationLongitude, pickupLatitude, pickupLongitude]);
+
   return (
     <ScreenContainer contentStyle={styles.content}>
         <View style={styles.header}>
@@ -21,8 +102,11 @@ export default function LiveTripScreen() {
         </View>
 
         <Map
-          etaLabel={assignedDemoDriver.eta}
+          destinationLocation={destinationLocation}
+          etaLabel={routeEtaLabel}
+          route={route ?? undefined}
           style={styles.mapCard}
+          userLocation={userLocation}
           variant="liveTrip"
         />
 
@@ -44,7 +128,21 @@ export default function LiveTripScreen() {
 
           <View style={styles.fareRow}>
             <Text style={styles.fareLabel}>Estimated fare</Text>
-            <Text style={styles.fareValue}>{demoArnpriorLocalFare.displayAmountWithCurrency}</Text>
+            <Text style={styles.fareValue}>{fareEstimate.displayAmountWithCurrency}</Text>
+          </View>
+
+          <View style={styles.divider} />
+
+          <View style={styles.fareRow}>
+            <Text style={styles.fareLabel}>Route ETA</Text>
+            <Text style={styles.fareValue}>{routeEtaLabel}</Text>
+          </View>
+
+          <View style={styles.detailSpacer} />
+
+          <View style={styles.fareRow}>
+            <Text style={styles.fareLabel}>Distance</Text>
+            <Text style={styles.fareValue}>{routeDistanceLabel}</Text>
           </View>
 
           <View style={styles.divider} />
@@ -63,7 +161,7 @@ export default function LiveTripScreen() {
             <View style={styles.destinationDot} />
             <View style={styles.routeCopy}>
               <Text style={styles.routeLabel}>Destination</Text>
-              <Text style={styles.routeValue}>Arnprior Shopping Centre</Text>
+              <Text style={styles.routeValue}>{selectedDestination.displayName}</Text>
             </View>
           </View>
         </View>
@@ -91,7 +189,15 @@ export default function LiveTripScreen() {
           </View>
 
           <PrimaryButton
-            onPress={() => router.push('/trip-complete')}
+            onPress={() => {
+              router.push({
+                pathname: '/trip-complete',
+                params: {
+                  ...destinationParams,
+                  ...toFareRouteParams(fareEstimate),
+                },
+              });
+            }}
             pressedStyle={styles.buttonPressed}
             style={styles.primaryButton}
             textStyle={styles.primaryButtonText}>
@@ -202,6 +308,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.divider,
     height: 1,
     marginVertical: spacing.s16,
+  },
+  detailSpacer: {
+    height: spacing.xxl,
   },
   fareLabel: {
     color: colors.muted,

@@ -18,6 +18,13 @@ export type DriverLocation = {
   timestamp: string;
 };
 
+export type DestinationLocation = {
+  addressLabel?: string;
+  coordinates: Coordinates;
+  placeId?: string;
+  source?: 'demo' | 'google' | 'typed';
+};
+
 export type RoutePoint = Coordinates;
 
 export type Route = {

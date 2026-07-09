@@ -1,12 +1,19 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import { colors, radius, spacing } from '@/shared/theme';
 import { PrimaryButton, ScreenContainer, SecondaryButton } from '@/shared/components';
-import { demoArnpriorLocalFare } from '@/shared/demo/demoData';
+import { getSelectedDestinationFromParams, toDestinationRouteParams } from '@/domains/places';
+import { calculateFare, getFareFromParams, toFareRouteParams } from '@/domains/pricing';
 
 
 export default function SearchingDriverScreen() {
+  const routeParams = useLocalSearchParams();
+  const selectedDestination = getSelectedDestinationFromParams(routeParams);
+  const fareEstimate = routeParams.fareAmountCents
+    ? getFareFromParams(routeParams)
+    : calculateFare({ destination: selectedDestination });
+  const destinationParams = toDestinationRouteParams(selectedDestination);
   const pulse = useMemo(() => new Animated.Value(0), []);
 
   useEffect(() => {
@@ -81,7 +88,7 @@ export default function SearchingDriverScreen() {
             <View style={styles.destinationMarker} />
             <View style={styles.routeText}>
               <Text style={styles.label}>Destination</Text>
-              <Text style={styles.value}>Arnprior Shopping Centre</Text>
+              <Text style={styles.value}>{selectedDestination.displayName}</Text>
             </View>
           </View>
         </View>
@@ -93,13 +100,21 @@ export default function SearchingDriverScreen() {
           </View>
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>Estimated fare</Text>
-            <Text style={styles.detailValue}>{demoArnpriorLocalFare.displayAmountWithCurrency}</Text>
+            <Text style={styles.detailValue}>{fareEstimate.displayAmountWithCurrency}</Text>
           </View>
         </View>
 
         <View style={styles.actions}>
           <PrimaryButton
-            onPress={() => router.push('/driver-assigned')}
+            onPress={() => {
+              router.push({
+                pathname: '/driver-assigned',
+                params: {
+                  ...destinationParams,
+                  ...toFareRouteParams(fareEstimate),
+                },
+              });
+            }}
             pressedStyle={styles.buttonPressed}
             style={styles.demoButton}
             textStyle={styles.demoButtonText}>

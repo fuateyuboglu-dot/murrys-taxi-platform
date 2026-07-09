@@ -1,12 +1,13 @@
 import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 
-import type { Coordinates, DriverLocation, Route, UserLocation } from '@/domains/locations';
+import type { Coordinates, DestinationLocation, DriverLocation, Route, UserLocation } from '@/domains/locations';
 import { colors, radius, spacing } from '@/shared/theme';
 
 type MapVariant = 'home' | 'liveTrip';
 
 type MapProps = {
+  destinationLocation?: DestinationLocation;
   driverLocation?: DriverLocation;
   etaLabel?: string;
   isLoading?: boolean;
@@ -30,7 +31,46 @@ const MURRYS_TAXI_HQ: Coordinates = {
   longitude: -76.3518,
 };
 
+function getMarkerCoordinates(
+  userLocation?: UserLocation,
+  destinationLocation?: DestinationLocation,
+  driverLocation?: DriverLocation,
+) {
+  return [
+    userLocation?.coordinates,
+    destinationLocation?.coordinates,
+    driverLocation?.coordinates,
+  ].filter((coordinate): coordinate is Coordinates => Boolean(coordinate));
+}
+
+function getMapRegion(
+  userLocation?: UserLocation,
+  destinationLocation?: DestinationLocation,
+  driverLocation?: DriverLocation,
+) {
+  const markerCoordinates = getMarkerCoordinates(userLocation, destinationLocation, driverLocation);
+
+  if (!markerCoordinates.length) {
+    return ARNPRIOR_REGION;
+  }
+
+  const latitudes = markerCoordinates.map((coordinate) => coordinate.latitude);
+  const longitudes = markerCoordinates.map((coordinate) => coordinate.longitude);
+  const minLatitude = Math.min(...latitudes);
+  const maxLatitude = Math.max(...latitudes);
+  const minLongitude = Math.min(...longitudes);
+  const maxLongitude = Math.max(...longitudes);
+
+  return {
+    latitude: (minLatitude + maxLatitude) / 2,
+    latitudeDelta: Math.max((maxLatitude - minLatitude) * 1.5, 0.045),
+    longitude: (minLongitude + maxLongitude) / 2,
+    longitudeDelta: Math.max((maxLongitude - minLongitude) * 1.5, 0.045),
+  };
+}
+
 export function Map({
+  destinationLocation,
   driverLocation,
   etaLabel,
   isLoading = false,
@@ -42,14 +82,7 @@ export function Map({
   variant = 'home',
 }: MapProps) {
   const isLiveTrip = variant === 'liveTrip';
-  const mapRegion = userLocation
-    ? {
-        latitude: userLocation.coordinates.latitude,
-        latitudeDelta: 0.045,
-        longitude: userLocation.coordinates.longitude,
-        longitudeDelta: 0.045,
-      }
-    : ARNPRIOR_REGION;
+  const mapRegion = getMapRegion(userLocation, destinationLocation, driverLocation);
   const routeCoordinates = route?.waypoints.length ? route.waypoints : undefined;
 
   return (
@@ -74,6 +107,14 @@ export function Map({
 
         {driverLocation ? (
           <Marker coordinate={driverLocation.coordinates} pinColor={colors.brand} title="Driver" />
+        ) : null}
+
+        {destinationLocation ? (
+          <Marker
+            coordinate={destinationLocation.coordinates}
+            pinColor={colors.black}
+            title={destinationLocation.addressLabel ?? 'Destination'}
+          />
         ) : null}
 
         {routeCoordinates ? (

@@ -1,10 +1,12 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { assignedDemoDriver } from '@/shared/demo/demoData';
 import { colors, radius, spacing } from '@/shared/theme';
 import { PrimaryButton, ScreenContainer, SecondaryButton } from '@/shared/components';
 import { callDriver, messageDriver } from '@/shared/utils/driverContact';
+import { getSelectedDestinationFromParams, toDestinationRouteParams } from '@/domains/places';
+import { calculateFare, getFareFromParams, toFareRouteParams } from '@/domains/pricing';
 
 
 const driverInitials = assignedDemoDriver.name
@@ -13,6 +15,13 @@ const driverInitials = assignedDemoDriver.name
   .join('');
 
 export default function DriverAssignedScreen() {
+  const routeParams = useLocalSearchParams();
+  const selectedDestination = getSelectedDestinationFromParams(routeParams);
+  const fareEstimate = routeParams.fareAmountCents
+    ? getFareFromParams(routeParams)
+    : calculateFare({ destination: selectedDestination });
+  const destinationParams = toDestinationRouteParams(selectedDestination);
+
   return (
     <ScreenContainer contentStyle={styles.content}>
         <View style={styles.header}>
@@ -63,7 +72,7 @@ export default function DriverAssignedScreen() {
             <View style={styles.destinationMarker} />
             <View style={styles.routeText}>
               <Text style={styles.routeLabel}>Destination</Text>
-              <Text style={styles.routeValue}>Arnprior Shopping Centre</Text>
+              <Text style={styles.routeValue}>{selectedDestination.displayName}</Text>
             </View>
           </View>
         </View>
@@ -91,7 +100,15 @@ export default function DriverAssignedScreen() {
           </View>
 
           <PrimaryButton
-            onPress={() => router.push('/live-trip')}
+            onPress={() => {
+              router.push({
+                pathname: '/live-trip',
+                params: {
+                  ...destinationParams,
+                  ...toFareRouteParams(fareEstimate),
+                },
+              });
+            }}
             pressedStyle={styles.buttonPressed}
             style={styles.primaryButton}
             textStyle={styles.primaryButtonText}>

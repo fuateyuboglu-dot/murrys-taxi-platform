@@ -1,18 +1,24 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import {
   assignedDemoDriver,
-  demoArnpriorLocalFare,
   getSelectedDemoPaymentMethod,
   submitDemoDriverRating,
 } from '@/shared/demo/demoData';
 import { colors, radius, spacing } from '@/shared/theme';
 import { PrimaryButton, ScreenContainer } from '@/shared/components';
+import { getSelectedDestinationFromParams } from '@/domains/places';
+import { calculateFare, getFareFromParams } from '@/domains/pricing';
 
 
 export default function TripCompleteScreen() {
+  const routeParams = useLocalSearchParams();
+  const selectedDestination = getSelectedDestinationFromParams(routeParams);
+  const fareEstimate = routeParams.fareAmountCents
+    ? getFareFromParams(routeParams)
+    : calculateFare({ destination: selectedDestination });
   const [comment, setComment] = useState('');
   const [hasSubmittedRating, setHasSubmittedRating] = useState(false);
   const [selectedRating, setSelectedRating] = useState(5);
@@ -34,8 +40,9 @@ export default function TripCompleteScreen() {
             <Text style={styles.checkText}>✓</Text>
           </View>
           <Text style={styles.title}>Trip complete</Text>
-          <Text style={styles.fare}>{demoArnpriorLocalFare.displayAmountWithCurrency}</Text>
+          <Text style={styles.fare}>{fareEstimate.displayAmountWithCurrency}</Text>
           <Text style={styles.paymentMethod}>{selectedPaymentMethod.label}</Text>
+          <Text style={styles.destinationText}>To {selectedDestination.displayName}</Text>
         </View>
 
         <View style={styles.driverCard}>
@@ -161,6 +168,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '800',
     letterSpacing: 0,
+  },
+  destinationText: {
+    color: colors.textOnDarkMuted,
+    fontSize: 14,
+    fontWeight: '800',
+    letterSpacing: 0,
+    textAlign: 'center',
   },
   driverCard: {
     alignItems: 'center',

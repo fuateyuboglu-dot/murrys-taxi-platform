@@ -1,7 +1,14 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { placesService, type AddressSearchResult } from '@/domains/places';
+import {
+  createSelectedDestinationFromSearchResult,
+  createSelectedDestinationFromText,
+  placesService,
+  toDestinationRouteParams,
+  type AddressSearchResult,
+  type SelectedDestination,
+} from '@/domains/places';
 import { colors, radius, spacing } from '@/shared/theme';
 import { Card, ListRow, ScreenContainer, SectionTitle } from '@/shared/components';
 import { getDemoFavouritePlaces } from '@/shared/demo/demoData';
@@ -16,6 +23,7 @@ export default function DestinationSearchScreen() {
   const [addressResults, setAddressResults] = useState<AddressSearchResult[]>(() => placesService.searchDemoAddresses(''));
   const [query, setQuery] = useState('');
   const trimmedQuery = query.trim();
+  const resultsSource = addressResults.some((item) => item.suggestion?.source === 'google') ? 'google' : 'demo';
 
   useEffect(() => {
     const abortController = new AbortController();
@@ -29,7 +37,9 @@ export default function DestinationSearchScreen() {
         .searchAddressSuggestions(trimmedQuery, {
           signal: abortController.signal,
         })
-        .then(setAddressResults)
+        .then((results) => {
+          setAddressResults(results);
+        })
         .catch((error: unknown) => {
           if (error instanceof Error && error.name === 'AbortError') {
             return;
@@ -45,8 +55,31 @@ export default function DestinationSearchScreen() {
     };
   }, [trimmedQuery]);
 
-  function continueToRideSelection() {
-    router.push('/ride-selection');
+  async function continueToRideSelection(destination: SelectedDestination) {
+    const placeDetails =
+      destination.source === 'google' && destination.placeId
+        ? await placesService.getPlaceDetails(destination.placeId)
+        : null;
+    const selectedDestination =
+      placeDetails?.coordinates
+        ? {
+            ...destination,
+            coordinates: placeDetails.coordinates,
+          }
+        : destination;
+
+    router.push({
+      pathname: '/ride-selection',
+      params: toDestinationRouteParams(selectedDestination),
+    });
+  }
+
+  function continueWithTypedAddress() {
+    if (!trimmedQuery) {
+      return;
+    }
+
+    void continueToRideSelection(createSelectedDestinationFromText(trimmedQuery, undefined, 'typed'));
   }
 
   return (
@@ -66,7 +99,7 @@ export default function DestinationSearchScreen() {
               autoFocus
               editable
               onChangeText={setQuery}
-              onSubmitEditing={continueToRideSelection}
+              onSubmitEditing={continueWithTypedAddress}
               placeholder="Where to?"
               placeholderTextColor={colors.mutedAlt}
               returnKeyType="search"
@@ -89,14 +122,18 @@ export default function DestinationSearchScreen() {
 
           {trimmedQuery ? (
             <View style={styles.section}>
-              <SectionTitle style={styles.sectionTitle}>Filtered demo results</SectionTitle>
+              <SectionTitle style={styles.sectionTitle}>
+                {resultsSource === 'google' ? 'Google suggestions' : 'Filtered demo results'}
+              </SectionTitle>
               <Card style={styles.listCard}>
                 {addressResults.length ? (
                   addressResults.map((item, index) => (
                     <LocationRow
                       key={item.id}
                       marker="D"
-                      onPress={continueToRideSelection}
+                      onPress={() => {
+                        void continueToRideSelection(createSelectedDestinationFromSearchResult(item));
+                      }}
                       showDivider={index < addressResults.length - 1}
                       subtitle={item.subtitle}
                       title={item.label}
@@ -105,7 +142,7 @@ export default function DestinationSearchScreen() {
                 ) : (
                   <LocationRow
                     marker="D"
-                    onPress={continueToRideSelection}
+                    onPress={continueWithTypedAddress}
                     showDivider={false}
                     title={`Use typed address: ${trimmedQuery}`}
                   />
@@ -124,7 +161,9 @@ export default function DestinationSearchScreen() {
                 <LocationRow
                   key={item}
                   marker="R"
-                  onPress={continueToRideSelection}
+                  onPress={() => {
+                    void continueToRideSelection(createSelectedDestinationFromText(item));
+                  }}
                   showDivider={index < recentDestinations.length - 1}
                   title={item}
                 />
@@ -139,7 +178,9 @@ export default function DestinationSearchScreen() {
                 <Pressable
                   accessibilityRole="button"
                   key={item.id}
-                  onPress={continueToRideSelection}
+                  onPress={() => {
+                    void continueToRideSelection(createSelectedDestinationFromText(item.address));
+                  }}
                   style={({ pressed }) => [
                     styles.favouriteCard,
                     pressed ? styles.buttonPressed : null,
@@ -161,7 +202,9 @@ export default function DestinationSearchScreen() {
                 <LocationRow
                   key={item}
                   marker="S"
-                  onPress={continueToRideSelection}
+                  onPress={() => {
+                    void continueToRideSelection(createSelectedDestinationFromText(item));
+                  }}
                   showDivider={index < suggestedLocations.length - 1}
                   title={item}
                 />
@@ -176,7 +219,9 @@ export default function DestinationSearchScreen() {
                 <LocationRow
                   key={item}
                   marker="D"
-                  onPress={continueToRideSelection}
+                  onPress={() => {
+                    void continueToRideSelection(createSelectedDestinationFromText(item));
+                  }}
                   showDivider={index < searchResults.length - 1}
                   title={item}
                 />

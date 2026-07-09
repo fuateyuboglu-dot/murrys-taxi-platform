@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, radius, spacing } from '@/shared/theme';
 import { useUserLocation } from '@/shared/hooks/useUserLocation';
 import { getDemoFavouritePlaces } from '@/shared/demo/demoData';
+import { createSelectedDestinationFromText, toDestinationRouteParams } from '@/domains/places';
 import {
   Card,
   CustomerBottomTabs,
@@ -33,8 +34,11 @@ export default function HomeScreen() {
   const { userLocation } = useUserLocation();
   const pickupLabel = userLocation.source === 'demo' ? 'Arnprior demo location' : 'Current Location';
 
-  function quickBook(_destination: string) {
-    router.push('/ride-selection');
+  function quickBook(destination: string) {
+    router.push({
+      pathname: '/ride-selection',
+      params: toDestinationRouteParams(createSelectedDestinationFromText(destination)),
+    });
   }
 
   function getQuickBookDestination(item: QuickBookItem) {
