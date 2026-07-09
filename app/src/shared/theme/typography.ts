@@ -1,0 +1,33 @@
+export const fontSize = {
+  xxs: 11,
+  xs: 12,
+  sm: 13,
+  md: 14,
+  base: 15,
+  lg: 16,
+  xl: 17,
+  xxl: 18,
+  titleSm: 19,
+  titleMd: 21,
+  titleLg: 22,
+  displaySm: 23,
+  displayMd: 24,
+  displayLg: 26,
+  displayXl: 28,
+  screenTitle: 30,
+  heroSm: 32,
+  heroMd: 33,
+  heroLg: 34,
+  heroXl: 36,
+  authTitle: 38,
+  brand: 46,
+  welcome: 48,
+} as const;
+
+export const fontWeight = {
+  medium: '500',
+  semibold: '600',
+  bold: '700',
+  extraBold: '800',
+  black: '900',
+} as const;
