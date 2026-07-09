@@ -68,6 +68,13 @@ export default function ProfileScreen() {
             <ProfileRow label="Settings" onPress={() => router.push('/settings')} value="Open" />
           </Card>
         </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Developer only</Text>
+          <Card style={styles.card}>
+            <ProfileRow label="Driver App" onPress={() => router.push('/driver-login')} value="Temporary entry" />
+          </Card>
+        </View>
       </ScrollView>
 
       <CustomerBottomTabs activeTab="Profile" />
