@@ -4,15 +4,16 @@ import { Animated, StyleSheet, Text, View } from 'react-native';
 import { colors, radius, spacing } from '@/shared/theme';
 import { PrimaryButton, ScreenContainer, SecondaryButton } from '@/shared/components';
 import { getSelectedDestinationFromParams, toDestinationRouteParams } from '@/domains/places';
-import { calculateFare, getFareFromParams, toFareRouteParams } from '@/domains/pricing';
+import { toFareRouteParams } from '@/domains/pricing';
+import { getActiveCompany } from '@/domains/company';
+import { getDemoTripFromParams } from '@/domains/trips';
 
 
 export default function SearchingDriverScreen() {
+  const company = getActiveCompany();
   const routeParams = useLocalSearchParams();
   const selectedDestination = getSelectedDestinationFromParams(routeParams);
-  const fareEstimate = routeParams.fareAmountCents
-    ? getFareFromParams(routeParams)
-    : calculateFare({ destination: selectedDestination });
+  const trip = getDemoTripFromParams(routeParams);
   const destinationParams = toDestinationRouteParams(selectedDestination);
   const pulse = useMemo(() => new Animated.Value(0), []);
 
@@ -68,7 +69,7 @@ export default function SearchingDriverScreen() {
           <View style={styles.copy}>
             <Text style={styles.title}>Finding your driver</Text>
             <Text style={styles.subtitle}>
-              We are sending your request to nearby Murrys Taxi drivers.
+              We are sending your request to nearby {company.name} drivers.
             </Text>
           </View>
         </View>
@@ -78,7 +79,7 @@ export default function SearchingDriverScreen() {
             <View style={styles.pickupMarker} />
             <View style={styles.routeText}>
               <Text style={styles.label}>Pickup</Text>
-              <Text style={styles.value}>Current Location</Text>
+              <Text style={styles.value}>{trip.pickup.address}</Text>
             </View>
           </View>
 
@@ -88,7 +89,7 @@ export default function SearchingDriverScreen() {
             <View style={styles.destinationMarker} />
             <View style={styles.routeText}>
               <Text style={styles.label}>Destination</Text>
-              <Text style={styles.value}>{selectedDestination.displayName}</Text>
+              <Text style={styles.value}>{trip.destination.address}</Text>
             </View>
           </View>
         </View>
@@ -100,7 +101,7 @@ export default function SearchingDriverScreen() {
           </View>
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>Estimated fare</Text>
-            <Text style={styles.detailValue}>{fareEstimate.displayAmountWithCurrency}</Text>
+            <Text style={styles.detailValue}>{trip.fare.displayAmountWithCurrency}</Text>
           </View>
         </View>
 
@@ -111,7 +112,7 @@ export default function SearchingDriverScreen() {
                 pathname: '/driver-assigned',
                 params: {
                   ...destinationParams,
-                  ...toFareRouteParams(fareEstimate),
+                  ...toFareRouteParams(trip.fare),
                 },
               });
             }}

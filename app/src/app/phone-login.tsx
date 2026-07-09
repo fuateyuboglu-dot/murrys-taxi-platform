@@ -3,9 +3,12 @@ import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput,
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, radius, spacing } from '@/shared/theme';
 import { PrimaryButton } from '@/shared/components';
+import { getActiveCompany } from '@/domains/company';
 
 
 export default function PhoneLoginScreen() {
+  const company = getActiveCompany();
+
   return (
     <SafeAreaView style={styles.screen}>
       <KeyboardAvoidingView
@@ -13,7 +16,7 @@ export default function PhoneLoginScreen() {
         style={styles.keyboardView}>
         <View style={styles.content}>
           <View style={styles.header}>
-            <Text style={styles.eyebrow}>Murrys Taxi</Text>
+            <Text style={styles.eyebrow}>{company.name}</Text>
             <Text style={styles.title}>Enter your phone number</Text>
             <Text style={styles.subtitle}>We will use this number to send a verification code.</Text>
           </View>

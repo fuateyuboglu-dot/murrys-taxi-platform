@@ -1,31 +1,30 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { assignedDemoDriver } from '@/shared/demo/demoData';
 import { colors, radius, spacing } from '@/shared/theme';
 import { PrimaryButton, ScreenContainer, SecondaryButton } from '@/shared/components';
 import { callDriver, messageDriver } from '@/shared/utils/driverContact';
 import { getSelectedDestinationFromParams, toDestinationRouteParams } from '@/domains/places';
-import { calculateFare, getFareFromParams, toFareRouteParams } from '@/domains/pricing';
-
-
-const driverInitials = assignedDemoDriver.name
-  .split(' ')
-  .map((namePart) => namePart.charAt(0))
-  .join('');
+import { toFareRouteParams } from '@/domains/pricing';
+import { getActiveCompany } from '@/domains/company';
+import { getDemoTripFromParams } from '@/domains/trips';
 
 export default function DriverAssignedScreen() {
+  const company = getActiveCompany();
   const routeParams = useLocalSearchParams();
   const selectedDestination = getSelectedDestinationFromParams(routeParams);
-  const fareEstimate = routeParams.fareAmountCents
-    ? getFareFromParams(routeParams)
-    : calculateFare({ destination: selectedDestination });
+  const trip = getDemoTripFromParams(routeParams);
+  const driver = trip.driver;
+  const driverInitials = driver?.name
+    .split(' ')
+    .map((namePart) => namePart.charAt(0))
+    .join('');
   const destinationParams = toDestinationRouteParams(selectedDestination);
 
   return (
     <ScreenContainer contentStyle={styles.content}>
         <View style={styles.header}>
-          <Text style={styles.eyebrow}>Murrys Taxi</Text>
+          <Text style={styles.eyebrow}>{company.name}</Text>
           <Text style={styles.title}>Driver assigned</Text>
         </View>
 
@@ -35,12 +34,12 @@ export default function DriverAssignedScreen() {
               <Text style={styles.avatarText}>{driverInitials}</Text>
             </View>
             <View style={styles.driverCopy}>
-              <Text style={styles.driverName}>{assignedDemoDriver.name}</Text>
-              <Text style={styles.driverMeta}>{assignedDemoDriver.vehicle}</Text>
-              <Text style={styles.driverColor}>{assignedDemoDriver.color}</Text>
+              <Text style={styles.driverName}>{driver?.name}</Text>
+              <Text style={styles.driverMeta}>{driver?.vehicle}</Text>
+              <Text style={styles.driverColor}>{driver?.color}</Text>
             </View>
             <View style={styles.etaBadge}>
-              <Text style={styles.etaValue}>{assignedDemoDriver.eta}</Text>
+              <Text style={styles.etaValue}>{driver?.eta}</Text>
               <Text style={styles.etaLabel}>ETA</Text>
             </View>
           </View>
@@ -48,11 +47,11 @@ export default function DriverAssignedScreen() {
           <View style={styles.driverStats}>
             <View style={styles.statPill}>
               <Text style={styles.statLabel}>Plate</Text>
-              <Text style={styles.statValue}>{assignedDemoDriver.plate}</Text>
+              <Text style={styles.statValue}>{driver?.plate}</Text>
             </View>
             <View style={styles.statPill}>
               <Text style={styles.statLabel}>Rating</Text>
-              <Text style={styles.statValue}>{assignedDemoDriver.rating.toFixed(1)}</Text>
+              <Text style={styles.statValue}>{driver?.rating.toFixed(1)}</Text>
             </View>
           </View>
         </View>
@@ -62,7 +61,7 @@ export default function DriverAssignedScreen() {
             <View style={styles.pickupMarker} />
             <View style={styles.routeText}>
               <Text style={styles.routeLabel}>Pickup</Text>
-              <Text style={styles.routeValue}>Current Location</Text>
+              <Text style={styles.routeValue}>{trip.pickup.address}</Text>
             </View>
           </View>
 
@@ -72,7 +71,7 @@ export default function DriverAssignedScreen() {
             <View style={styles.destinationMarker} />
             <View style={styles.routeText}>
               <Text style={styles.routeLabel}>Destination</Text>
-              <Text style={styles.routeValue}>{selectedDestination.displayName}</Text>
+              <Text style={styles.routeValue}>{trip.destination.address}</Text>
             </View>
           </View>
         </View>
@@ -81,7 +80,9 @@ export default function DriverAssignedScreen() {
           <View style={styles.quickActions}>
             <SecondaryButton
               onPress={() => {
-                void callDriver(assignedDemoDriver);
+                if (driver) {
+                  void callDriver(driver);
+                }
               }}
               pressedStyle={styles.buttonPressed}
               style={styles.secondaryButton}
@@ -90,7 +91,9 @@ export default function DriverAssignedScreen() {
             </SecondaryButton>
             <SecondaryButton
               onPress={() => {
-                void messageDriver(assignedDemoDriver);
+                if (driver) {
+                  void messageDriver(driver);
+                }
               }}
               pressedStyle={styles.buttonPressed}
               style={styles.secondaryButton}
@@ -105,7 +108,7 @@ export default function DriverAssignedScreen() {
                 pathname: '/live-trip',
                 params: {
                   ...destinationParams,
-                  ...toFareRouteParams(fareEstimate),
+                  ...toFareRouteParams(trip.fare),
                 },
               });
             }}

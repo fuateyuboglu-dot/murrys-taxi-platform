@@ -2,19 +2,16 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { colors, radius, spacing } from '@/shared/theme';
 import { PrimaryButton, ScreenContainer, SecondaryButton } from '@/shared/components';
-import { getSelectedDemoPaymentMethod } from '@/shared/demo/demoData';
 import { getSelectedDestinationFromParams, toDestinationRouteParams } from '@/domains/places';
-import { calculateFare, getFareFromParams, toFareRouteParams } from '@/domains/pricing';
+import { toFareRouteParams } from '@/domains/pricing';
+import { getDemoTripFromParams } from '@/domains/trips';
 
 
 export default function BookingConfirmationScreen() {
   const routeParams = useLocalSearchParams();
   const selectedDestination = getSelectedDestinationFromParams(routeParams);
-  const fareEstimate = routeParams.fareAmountCents
-    ? getFareFromParams(routeParams)
-    : calculateFare({ destination: selectedDestination });
+  const trip = getDemoTripFromParams(routeParams);
   const destinationParams = toDestinationRouteParams(selectedDestination);
-  const selectedPaymentMethod = getSelectedDemoPaymentMethod();
 
   return (
     <ScreenContainer contentStyle={styles.content}>
@@ -37,7 +34,7 @@ export default function BookingConfirmationScreen() {
             <View style={styles.pickupMarker} />
             <View style={styles.routeText}>
               <Text style={styles.label}>Pickup</Text>
-              <Text style={styles.value}>Current Location</Text>
+              <Text style={styles.value}>{trip.pickup.address}</Text>
             </View>
           </View>
 
@@ -47,15 +44,15 @@ export default function BookingConfirmationScreen() {
             <View style={styles.destinationMarker} />
             <View style={styles.routeText}>
               <Text style={styles.label}>Destination</Text>
-              <Text style={styles.value}>{selectedDestination.displayName}</Text>
+              <Text style={styles.value}>{trip.destination.address}</Text>
             </View>
           </View>
         </View>
 
         <View style={styles.detailsCard}>
           <DetailRow label="Ride type" value="Standard" />
-          <DetailRow label="Estimated fare" value={fareEstimate.displayAmountWithCurrency} />
-          <DetailRow label="Payment" value={selectedPaymentMethod.label} />
+          <DetailRow label="Estimated fare" value={trip.fare.displayAmountWithCurrency} />
+          <DetailRow label="Payment" value={trip.paymentMethod.label} />
         </View>
 
         <View style={styles.notesCard}>
@@ -76,7 +73,7 @@ export default function BookingConfirmationScreen() {
                 pathname: '/searching-driver',
                 params: {
                   ...destinationParams,
-                  ...toFareRouteParams(fareEstimate),
+                  ...toFareRouteParams(trip.fare),
                 },
               });
             }}

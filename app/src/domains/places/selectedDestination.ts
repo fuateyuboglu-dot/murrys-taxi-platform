@@ -1,5 +1,6 @@
 import type { AddressSearchResult, PlaceSuggestion } from './types';
 import type { Coordinates } from '@/domains/locations';
+import { getActiveCompany } from '@/domains/company';
 
 const DESTINATION_PARAM_KEYS = {
   displayName: 'destinationDisplayName',
@@ -33,7 +34,7 @@ export type DestinationRouteParams = {
 export const fallbackSelectedDestination: SelectedDestination = {
   displayName: 'Arnprior Shopping Centre',
   primaryText: 'Arnprior Shopping Centre',
-  secondaryText: 'Arnprior and Area',
+  secondaryText: getActiveCompany().serviceArea,
   source: 'demo',
 };
 
@@ -89,7 +90,7 @@ export function createSelectedDestinationFromSearchResult(result: AddressSearchR
 
 export function createSelectedDestinationFromText(
   destination: string,
-  secondaryText = 'Arnprior and Area',
+  secondaryText = getActiveCompany().serviceArea,
   source: SelectedDestinationSource = 'demo',
 ): SelectedDestination {
   const trimmedDestination = destination.trim();

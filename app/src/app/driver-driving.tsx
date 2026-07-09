@@ -2,25 +2,19 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Card, PrimaryButton, ScreenContainer } from '@/shared/components';
-import { assignedDemoDriver } from '@/shared/demo/demoData';
-import { getRouteMetricsFromParams } from '@/domains/locations';
+import { setDriverState } from '@/domains/drivers';
 import { getSelectedDestinationFromParams, toDestinationRouteParams } from '@/domains/places';
-import { calculateFare, getFareFromParams, toFareRouteParams } from '@/domains/pricing';
-import { demoPassenger, formatDemoRouteDistance, formatDemoRouteDuration } from '@/shared/demo/driverTripDemo';
+import { toFareRouteParams } from '@/domains/pricing';
+import { formatDemoRouteDistance, formatDemoRouteDuration } from '@/shared/demo/driverTripDemo';
+import { getDemoTripFromParams } from '@/domains/trips';
 import { colors, radius, spacing } from '@/shared/theme';
 
 export default function DriverDrivingScreen() {
   const routeParams = useLocalSearchParams();
   const selectedDestination = getSelectedDestinationFromParams(routeParams);
-  const routeMetrics = getRouteMetricsFromParams(routeParams);
-  const fareEstimate = routeParams.fareAmountCents
-    ? getFareFromParams(routeParams)
-    : calculateFare({
-        destination: selectedDestination,
-        distanceMeters: routeMetrics.distanceMeters,
-      });
-  const etaLabel = formatDemoRouteDuration(routeMetrics.durationSeconds, assignedDemoDriver.eta);
-  const distanceLabel = formatDemoRouteDistance(routeMetrics.distanceMeters);
+  const trip = getDemoTripFromParams(routeParams);
+  const etaLabel = formatDemoRouteDuration(trip.route.durationSeconds, trip.driver?.eta ?? '4 min');
+  const distanceLabel = formatDemoRouteDistance(trip.route.distanceMeters);
 
   return (
     <ScreenContainer contentStyle={styles.content}>
@@ -31,10 +25,10 @@ export default function DriverDrivingScreen() {
 
       <Card style={styles.liveTripCard}>
         <Text style={styles.liveLabel}>Live trip</Text>
-        <Text style={styles.passenger}>{demoPassenger.name}</Text>
+        <Text style={styles.passenger}>{trip.customer.name}</Text>
         <View style={styles.divider} />
         <Text style={styles.destinationLabel}>Destination</Text>
-        <Text style={styles.destinationValue}>{selectedDestination.displayName}</Text>
+        <Text style={styles.destinationValue}>{trip.destination.address}</Text>
       </Card>
 
       <Card style={styles.detailsCard}>
@@ -44,13 +38,14 @@ export default function DriverDrivingScreen() {
 
       <PrimaryButton
         onPress={() => {
+          setDriverState('completed');
           router.push({
             pathname: '/driver-trip-complete',
             params: {
               ...toDestinationRouteParams(selectedDestination),
-              ...toFareRouteParams(fareEstimate),
-              routeDistanceMeters: routeMetrics.distanceMeters ? String(routeMetrics.distanceMeters) : undefined,
-              routeDurationSeconds: routeMetrics.durationSeconds ? String(routeMetrics.durationSeconds) : undefined,
+              ...toFareRouteParams(trip.fare),
+              routeDistanceMeters: trip.route.distanceMeters ? String(trip.route.distanceMeters) : undefined,
+              routeDurationSeconds: trip.route.durationSeconds ? String(trip.route.durationSeconds) : undefined,
             },
           });
         }}

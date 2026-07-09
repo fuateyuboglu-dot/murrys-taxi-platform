@@ -11,12 +11,12 @@ function showSupportAlert(message: string) {
     return;
   }
 
-  Alert.alert('Murrys Taxi Support', message);
+  Alert.alert(`${demoCompany.name} Support`, message);
 }
 
-async function callMurrysTaxi() {
+async function callCompany() {
   if (Platform.OS === 'web') {
-    showSupportAlert(`Call Murrys Taxi: ${demoCompany.webSupportPhoneNumber}`);
+    showSupportAlert(`Call ${demoCompany.name}: ${demoCompany.webSupportPhoneNumber}`);
     return;
   }
 
@@ -25,7 +25,7 @@ async function callMurrysTaxi() {
 
 async function messageSupport() {
   if (Platform.OS === 'web') {
-    showSupportAlert(`Message Murrys Taxi: ${demoCompany.webSupportPhoneNumber}`);
+    showSupportAlert(`Message ${demoCompany.name}: ${demoCompany.webSupportPhoneNumber}`);
     return;
   }
 
@@ -43,11 +43,11 @@ export default function SupportScreen() {
 
         <Card style={styles.heroCard}>
           <Text style={styles.heroTitle}>{demoCompany.name}</Text>
-          <Text style={styles.heroText}>Fast local support for Arnprior and Area.</Text>
+          <Text style={styles.heroText}>Fast local support for {demoCompany.serviceArea}.</Text>
         </Card>
 
         <Card style={styles.listCard}>
-          <SupportRow description={demoCompany.phoneNumber} glyph="C" label="Call Murrys Taxi" onPress={callMurrysTaxi} />
+          <SupportRow description={demoCompany.phoneNumber} glyph="C" label={`Call ${demoCompany.name}`} onPress={callCompany} />
           <View style={styles.divider} />
           <SupportRow description="Send an SMS to support" glyph="M" label="Message support" onPress={messageSupport} />
           <View style={styles.divider} />

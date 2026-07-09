@@ -2,23 +2,14 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Card, PrimaryButton, ScreenContainer } from '@/shared/components';
-import { assignedDemoDriver } from '@/shared/demo/demoData';
-import { getRouteMetricsFromParams } from '@/domains/locations';
-import { getSelectedDestinationFromParams } from '@/domains/places';
-import { calculateFare, getFareFromParams } from '@/domains/pricing';
-import { demoPassenger, formatDemoRouteDistance, formatDemoRouteDuration } from '@/shared/demo/driverTripDemo';
+import { setDriverState } from '@/domains/drivers';
+import { formatDemoRouteDistance, formatDemoRouteDuration } from '@/shared/demo/driverTripDemo';
+import { getDemoTripFromParams } from '@/domains/trips';
 import { colors, radius, spacing } from '@/shared/theme';
 
 export default function DriverTripCompleteScreen() {
   const routeParams = useLocalSearchParams();
-  const selectedDestination = getSelectedDestinationFromParams(routeParams);
-  const routeMetrics = getRouteMetricsFromParams(routeParams);
-  const fareEstimate = routeParams.fareAmountCents
-    ? getFareFromParams(routeParams)
-    : calculateFare({
-        destination: selectedDestination,
-        distanceMeters: routeMetrics.distanceMeters,
-      });
+  const trip = getDemoTripFromParams(routeParams);
 
   return (
     <ScreenContainer contentStyle={styles.content}>
@@ -27,20 +18,23 @@ export default function DriverTripCompleteScreen() {
           <Text style={styles.checkText}>✓</Text>
         </View>
         <Text style={styles.title}>Trip complete</Text>
-        <Text style={styles.fare}>{fareEstimate.displayAmountWithCurrency}</Text>
+        <Text style={styles.fare}>{trip.fare.displayAmountWithCurrency}</Text>
       </Card>
 
       <Card style={styles.detailsCard}>
-        <DetailRow label="Passenger" value={demoPassenger.name} />
-        <DetailRow label="Distance" value={formatDemoRouteDistance(routeMetrics.distanceMeters)} />
+        <DetailRow label="Passenger" value={trip.customer.name} />
+        <DetailRow label="Distance" value={formatDemoRouteDistance(trip.route.distanceMeters)} />
         <DetailRow
           label="Duration"
-          value={formatDemoRouteDuration(routeMetrics.durationSeconds, assignedDemoDriver.eta)}
+          value={formatDemoRouteDuration(trip.route.durationSeconds, trip.driver?.eta ?? '4 min')}
         />
       </Card>
 
       <PrimaryButton
-        onPress={() => router.replace('/driver-home')}
+        onPress={() => {
+          setDriverState('waiting');
+          router.replace('/driver-home');
+        }}
         pressedStyle={styles.buttonPressed}
         style={styles.primaryButton}
         textStyle={styles.primaryButtonText}>

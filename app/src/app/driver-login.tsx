@@ -3,9 +3,13 @@ import { KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } fro
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { PrimaryButton } from '@/shared/components';
+import { getActiveCompany } from '@/domains/company';
+import { setDriverState } from '@/domains/drivers';
 import { colors, radius, spacing } from '@/shared/theme';
 
 export default function DriverLoginScreen() {
+  const company = getActiveCompany();
+
   return (
     <SafeAreaView style={styles.screen}>
       <KeyboardAvoidingView
@@ -13,7 +17,7 @@ export default function DriverLoginScreen() {
         style={styles.keyboardView}>
         <View style={styles.content}>
           <View style={styles.header}>
-            <Text style={styles.eyebrow}>Murrys Taxi Driver</Text>
+            <Text style={styles.eyebrow}>{company.name} Driver</Text>
             <Text style={styles.title}>Sign in to drive</Text>
             <Text style={styles.subtitle}>Enter your driver phone number to continue.</Text>
           </View>
@@ -36,7 +40,10 @@ export default function DriverLoginScreen() {
           </View>
 
           <PrimaryButton
-            onPress={() => router.push('/driver-home')}
+            onPress={() => {
+              setDriverState('waiting');
+              router.push('/driver-home');
+            }}
             pressedStyle={styles.buttonPressed}
             style={styles.primaryButton}
             textStyle={styles.primaryButtonText}>

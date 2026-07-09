@@ -3,11 +3,9 @@ import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { Card, PrimaryButton, ScreenContainer } from '@/shared/components';
-import { demoArnpriorLocalFare, scheduleDemoBooking } from '@/shared/demo/demoData';
+import { scheduleDemoBooking } from '@/shared/demo/demoData';
+import { getDemoTrip } from '@/domains/trips';
 import { colors, radius, spacing } from '@/shared/theme';
-
-const DEMO_PICKUP = 'Current Location';
-const DEMO_DESTINATION = 'Arnprior Shopping Centre';
 
 function formatDateInput(date: Date) {
   const year = date.getFullYear();
@@ -35,6 +33,7 @@ function getDateTimeFromInputs(date: string, time: string) {
 }
 
 export default function ScheduleRideScreen() {
+  const trip = getDemoTrip();
   const [date, setDate] = useState(() => getTomorrowDateInput());
   const [scheduleError, setScheduleError] = useState('');
   const [time, setTime] = useState('18:00');
@@ -56,9 +55,9 @@ export default function ScheduleRideScreen() {
 
     scheduleDemoBooking({
       date,
-      destination: DEMO_DESTINATION,
-      fare: demoArnpriorLocalFare.displayAmountWithCurrency,
-      pickup: DEMO_PICKUP,
+      destination: trip.destination.address,
+      fare: trip.fare.displayAmountWithCurrency,
+      pickup: trip.pickup.address,
       rideType: 'Standard Taxi',
       time,
     });
@@ -117,7 +116,7 @@ export default function ScheduleRideScreen() {
             <View style={styles.pickupMarker} />
             <View style={styles.routeCopy}>
               <Text style={styles.routeLabel}>Pickup</Text>
-              <Text style={styles.routeValue}>{DEMO_PICKUP}</Text>
+              <Text style={styles.routeValue}>{trip.pickup.address}</Text>
             </View>
           </View>
 
@@ -127,14 +126,14 @@ export default function ScheduleRideScreen() {
             <View style={styles.destinationMarker} />
             <View style={styles.routeCopy}>
               <Text style={styles.routeLabel}>Destination</Text>
-              <Text style={styles.routeValue}>{DEMO_DESTINATION}</Text>
+              <Text style={styles.routeValue}>{trip.destination.address}</Text>
             </View>
           </View>
         </Card>
 
         <Card style={styles.fareCard}>
           <Text style={styles.fareLabel}>Estimated fare</Text>
-          <Text style={styles.fareValue}>{demoArnpriorLocalFare.displayAmountWithCurrency}</Text>
+          <Text style={styles.fareValue}>{trip.fare.displayAmountWithCurrency}</Text>
         </Card>
       </ScrollView>
 

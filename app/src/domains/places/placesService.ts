@@ -1,4 +1,5 @@
 import type { AddressSearchResult, PlaceDetails, PlaceSuggestion } from './types';
+import { getActiveCompany } from '@/domains/company';
 
 const GOOGLE_PLACES_AUTOCOMPLETE_URL = 'https://places.googleapis.com/v1/places:autocomplete';
 const GOOGLE_PLACES_DETAILS_URL = 'https://places.googleapis.com/v1/places';
@@ -13,7 +14,7 @@ const demoAddressLabels = [
   'Downtown Arnprior',
   'Arnprior Regional Health',
   'Daniel Street South',
-  'Murrys Taxi Office',
+  `${getActiveCompany().name} Office`,
   'Ottawa Street',
   'Madawaska Boulevard',
   'Arnprior Public Library',
@@ -24,11 +25,12 @@ const demoAddressLabels = [
 ];
 
 function toDemoSearchResult(label: string): AddressSearchResult {
+  const company = getActiveCompany();
   const suggestion: PlaceSuggestion = {
-    description: `${label}, Arnprior and Area`,
+    description: `${label}, ${company.serviceArea}`,
     id: `demo-${label.toLowerCase().replaceAll(' ', '-')}`,
     mainText: label,
-    secondaryText: 'Arnprior and Area',
+    secondaryText: company.serviceArea,
     source: 'demo',
   };
 
@@ -36,7 +38,7 @@ function toDemoSearchResult(label: string): AddressSearchResult {
     address: label,
     id: suggestion.id,
     label,
-    subtitle: 'Arnprior and Area',
+    subtitle: company.serviceArea,
     suggestion,
   };
 }

@@ -3,31 +3,29 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import {
-  assignedDemoDriver,
-  getSelectedDemoPaymentMethod,
   submitDemoDriverRating,
 } from '@/shared/demo/demoData';
 import { colors, radius, spacing } from '@/shared/theme';
 import { PrimaryButton, ScreenContainer } from '@/shared/components';
-import { getSelectedDestinationFromParams } from '@/domains/places';
-import { calculateFare, getFareFromParams } from '@/domains/pricing';
+import { getDemoTripFromParams } from '@/domains/trips';
 
 
 export default function TripCompleteScreen() {
   const routeParams = useLocalSearchParams();
-  const selectedDestination = getSelectedDestinationFromParams(routeParams);
-  const fareEstimate = routeParams.fareAmountCents
-    ? getFareFromParams(routeParams)
-    : calculateFare({ destination: selectedDestination });
+  const trip = getDemoTripFromParams(routeParams);
+  const driver = trip.driver;
   const [comment, setComment] = useState('');
   const [hasSubmittedRating, setHasSubmittedRating] = useState(false);
   const [selectedRating, setSelectedRating] = useState(5);
-  const selectedPaymentMethod = getSelectedDemoPaymentMethod();
 
   function submitRating() {
+    if (!driver) {
+      return;
+    }
+
     submitDemoDriverRating({
       comment: comment.trim() || undefined,
-      driverId: assignedDemoDriver.id,
+      driverId: driver.id,
       rating: selectedRating,
     });
     setHasSubmittedRating(true);
@@ -40,19 +38,19 @@ export default function TripCompleteScreen() {
             <Text style={styles.checkText}>✓</Text>
           </View>
           <Text style={styles.title}>Trip complete</Text>
-          <Text style={styles.fare}>{fareEstimate.displayAmountWithCurrency}</Text>
-          <Text style={styles.paymentMethod}>{selectedPaymentMethod.label}</Text>
-          <Text style={styles.destinationText}>To {selectedDestination.displayName}</Text>
+          <Text style={styles.fare}>{trip.fare.displayAmountWithCurrency}</Text>
+          <Text style={styles.paymentMethod}>{trip.paymentMethod.label}</Text>
+          <Text style={styles.destinationText}>To {trip.destination.address}</Text>
         </View>
 
         <View style={styles.driverCard}>
           <View style={styles.driverAvatar}>
-            <Text style={styles.driverInitial}>{assignedDemoDriver.name.charAt(0)}</Text>
+            <Text style={styles.driverInitial}>{driver?.name.charAt(0)}</Text>
           </View>
           <View style={styles.driverCopy}>
-            <Text style={styles.driverName}>{assignedDemoDriver.name}</Text>
-            <Text style={styles.vehicle}>{assignedDemoDriver.vehicle}</Text>
-            <Text style={styles.plate}>{assignedDemoDriver.plate}</Text>
+            <Text style={styles.driverName}>{driver?.name}</Text>
+            <Text style={styles.vehicle}>{driver?.vehicle}</Text>
+            <Text style={styles.plate}>{driver?.plate}</Text>
           </View>
         </View>
 

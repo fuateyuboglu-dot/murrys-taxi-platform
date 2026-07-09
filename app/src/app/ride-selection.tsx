@@ -3,13 +3,14 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { colors, radius, spacing } from '@/shared/theme';
 import { PrimaryButton, ScreenContainer } from '@/shared/components';
 import { getSelectedDestinationFromParams, toDestinationRouteParams } from '@/domains/places';
-import { calculateFare, toFareRouteParams } from '@/domains/pricing';
+import { toFareRouteParams } from '@/domains/pricing';
+import { getDemoTripFromParams } from '@/domains/trips';
 
 
 export default function RideSelectionScreen() {
   const routeParams = useLocalSearchParams();
   const selectedDestination = getSelectedDestinationFromParams(routeParams);
-  const fareEstimate = calculateFare({ destination: selectedDestination });
+  const trip = getDemoTripFromParams(routeParams);
   const destinationParams = toDestinationRouteParams(selectedDestination);
   const rideOptions = [
     {
@@ -17,7 +18,7 @@ export default function RideSelectionScreen() {
       name: 'Standard Taxi',
       arrival: '4 min',
       duration: '12 min',
-      price: fareEstimate.displayAmountWithCurrency,
+      price: trip.fare.displayAmountWithCurrency,
     },
   ];
 
@@ -40,10 +41,10 @@ export default function RideSelectionScreen() {
         <View style={styles.routeCard}>
           <View style={styles.routeRow}>
             <View style={styles.pickupMarker} />
-            <View style={styles.routeCopy}>
-              <Text style={styles.routeLabel}>Pickup</Text>
-              <Text style={styles.routeValue}>Current Location</Text>
-            </View>
+              <View style={styles.routeCopy}>
+                <Text style={styles.routeLabel}>Pickup</Text>
+              <Text style={styles.routeValue}>{trip.pickup.address}</Text>
+              </View>
           </View>
 
           <View style={styles.routeDivider} />
@@ -52,7 +53,7 @@ export default function RideSelectionScreen() {
             <View style={styles.destinationMarker} />
             <View style={styles.routeCopy}>
               <Text style={styles.routeLabel}>Destination</Text>
-              <Text style={styles.routeValue}>{selectedDestination.displayName}</Text>
+              <Text style={styles.routeValue}>{trip.destination.address}</Text>
             </View>
           </View>
         </View>
@@ -102,7 +103,7 @@ export default function RideSelectionScreen() {
               pathname: '/booking-confirmation',
               params: {
                 ...destinationParams,
-                ...toFareRouteParams(fareEstimate),
+                ...toFareRouteParams(trip.fare),
               },
             });
           }}

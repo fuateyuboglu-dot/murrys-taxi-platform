@@ -2,7 +2,6 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { assignedDemoDriver } from '@/shared/demo/demoData';
 import { colors, radius, spacing } from '@/shared/theme';
 import { Map, PrimaryButton, ScreenContainer, SecondaryButton } from '@/shared/components';
 import { callDriver, messageDriver } from '@/shared/utils/driverContact';
@@ -10,12 +9,7 @@ import { getSelectedDestinationFromParams, toDestinationRouteParams } from '@/do
 import { useUserLocation } from '@/shared/hooks/useUserLocation';
 import { locationService, type Route } from '@/domains/locations';
 import { calculateFare, getFareFromParams, toFareRouteParams } from '@/domains/pricing';
-
-
-const driverInitials = assignedDemoDriver.name
-  .split(' ')
-  .map((namePart) => namePart.charAt(0))
-  .join('');
+import { getDemoTripFromParams } from '@/domains/trips';
 
 function formatRouteDuration(durationSeconds: number) {
   const minutes = Math.max(1, Math.round(durationSeconds / 60));
@@ -34,6 +28,12 @@ function formatRouteDistance(distanceMeters: number) {
 export default function LiveTripScreen() {
   const routeParams = useLocalSearchParams();
   const selectedDestination = getSelectedDestinationFromParams(routeParams);
+  const trip = getDemoTripFromParams(routeParams);
+  const driver = trip.driver;
+  const driverInitials = driver?.name
+    .split(' ')
+    .map((namePart) => namePart.charAt(0))
+    .join('');
   const { userLocation } = useUserLocation();
   const [route, setRoute] = useState<Route | null>(null);
   const initialFare = routeParams.fareAmountCents
@@ -59,7 +59,7 @@ export default function LiveTripScreen() {
       })
     : initialFare;
   const destinationParams = toDestinationRouteParams(selectedDestination);
-  const routeEtaLabel = route ? formatRouteDuration(route.durationSeconds) : assignedDemoDriver.eta;
+  const routeEtaLabel = route ? formatRouteDuration(route.durationSeconds) : driver?.eta;
   const routeDistanceLabel = route ? formatRouteDistance(route.distanceMeters) : 'Demo route';
 
   useEffect(() => {
@@ -116,11 +116,11 @@ export default function LiveTripScreen() {
               <Text style={styles.avatarText}>{driverInitials}</Text>
             </View>
             <View style={styles.driverCopy}>
-              <Text style={styles.driverName}>{assignedDemoDriver.name}</Text>
+              <Text style={styles.driverName}>{driver?.name}</Text>
               <Text style={styles.vehicle}>
-                {assignedDemoDriver.color} {assignedDemoDriver.vehicle}
+                {driver?.color} {driver?.vehicle}
               </Text>
-              <Text style={styles.plate}>{assignedDemoDriver.plate}</Text>
+              <Text style={styles.plate}>{driver?.plate}</Text>
             </View>
           </View>
 
@@ -151,7 +151,7 @@ export default function LiveTripScreen() {
             <View style={styles.pickupDot} />
             <View style={styles.routeCopy}>
               <Text style={styles.routeLabel}>Pickup</Text>
-              <Text style={styles.routeValue}>Current Location</Text>
+              <Text style={styles.routeValue}>{trip.pickup.address}</Text>
             </View>
           </View>
 
@@ -161,7 +161,7 @@ export default function LiveTripScreen() {
             <View style={styles.destinationDot} />
             <View style={styles.routeCopy}>
               <Text style={styles.routeLabel}>Destination</Text>
-              <Text style={styles.routeValue}>{selectedDestination.displayName}</Text>
+              <Text style={styles.routeValue}>{trip.destination.address}</Text>
             </View>
           </View>
         </View>
@@ -170,7 +170,9 @@ export default function LiveTripScreen() {
           <View style={styles.quickActions}>
             <SecondaryButton
               onPress={() => {
-                void callDriver(assignedDemoDriver);
+                if (driver) {
+                  void callDriver(driver);
+                }
               }}
               pressedStyle={styles.buttonPressed}
               style={styles.secondaryButton}
@@ -179,7 +181,9 @@ export default function LiveTripScreen() {
             </SecondaryButton>
             <SecondaryButton
               onPress={() => {
-                void messageDriver(assignedDemoDriver);
+                if (driver) {
+                  void messageDriver(driver);
+                }
               }}
               pressedStyle={styles.buttonPressed}
               style={styles.secondaryButton}

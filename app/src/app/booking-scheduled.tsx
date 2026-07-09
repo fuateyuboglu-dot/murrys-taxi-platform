@@ -3,10 +3,12 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { Card, PrimaryButton, ScreenContainer, SecondaryButton } from '@/shared/components';
 import { getScheduledDemoBooking } from '@/shared/demo/demoData';
+import { getDemoTrip } from '@/domains/trips';
 import { colors, radius, spacing } from '@/shared/theme';
 
 export default function BookingScheduledScreen() {
   const scheduledBooking = getScheduledDemoBooking();
+  const trip = getDemoTrip();
 
   return (
     <ScreenContainer contentStyle={styles.content}>
@@ -20,11 +22,13 @@ export default function BookingScheduledScreen() {
 
       <Card style={styles.summaryCard}>
         <Text style={styles.summaryEyebrow}>Upcoming ride</Text>
-        <Text style={styles.summaryTitle}>{scheduledBooking?.destination ?? 'Arnprior Shopping Centre'}</Text>
+        <Text style={styles.summaryTitle}>{scheduledBooking?.destination ?? trip.destination.address}</Text>
         <Text style={styles.summaryText}>
           {scheduledBooking ? `${scheduledBooking.date} at ${scheduledBooking.time}` : 'Today at 6:00 PM'}
         </Text>
-        <Text style={styles.summaryFare}>{scheduledBooking?.fare ?? '$10.00 CAD'}</Text>
+        <Text style={styles.summaryFare}>
+          {scheduledBooking?.fare ?? trip.fare.displayAmountWithCurrency}
+        </Text>
       </Card>
 
       <View style={styles.actions}>

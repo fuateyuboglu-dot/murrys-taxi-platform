@@ -18,7 +18,7 @@ type MapProps = {
   variant?: MapVariant;
 };
 
-const MURRYS_TAXI_HQ: Coordinates = {
+const COMPANY_HQ_COORDINATES: Coordinates = {
   latitude: 45.4334,
   longitude: -76.3518,
 };
@@ -33,7 +33,7 @@ function getMapCoordinates(
   driverLocation?: DriverLocation,
 ) {
   return [
-    MURRYS_TAXI_HQ,
+    COMPANY_HQ_COORDINATES,
     userLocation?.coordinates,
     destinationLocation?.coordinates,
     driverLocation?.coordinates,
@@ -86,7 +86,7 @@ export function Map({
         <View style={[styles.block, styles.blockTop]} />
         <View style={[styles.block, styles.blockBottom]} />
         <View style={styles.routeLine} />
-        <View style={[styles.hqMarker, getProjectedMarkerStyle(MURRYS_TAXI_HQ, mapCoordinates)]}>
+        <View style={[styles.hqMarker, getProjectedMarkerStyle(COMPANY_HQ_COORDINATES, mapCoordinates)]}>
           <View style={styles.hqMarkerCore} />
         </View>
         {userLocation ? (

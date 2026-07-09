@@ -2,16 +2,17 @@ import { router } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Card, PrimaryButton, ScreenContainer, SecondaryButton } from '@/shared/components';
-import { assignedDemoDriver } from '@/shared/demo/demoData';
-import { calculateFare, toFareRouteParams } from '@/domains/pricing';
-import { createSelectedDestinationFromText, toDestinationRouteParams } from '@/domains/places';
+import { setDriverState } from '@/domains/drivers';
+import { toFareRouteParams } from '@/domains/pricing';
+import { getSelectedDestinationFromParams, toDestinationRouteParams } from '@/domains/places';
+import { getDemoTrip } from '@/domains/trips';
 import { colors, radius, spacing } from '@/shared/theme';
 
-const demoPickup = 'Current Location';
-const demoDestination = createSelectedDestinationFromText('Arnprior Shopping Centre');
-const demoFare = calculateFare({ destination: demoDestination });
-
 export default function DriverTripRequestScreen() {
+  const trip = getDemoTrip();
+  const selectedDestination = getSelectedDestinationFromParams({});
+  const driver = trip.driver;
+
   return (
     <ScreenContainer contentStyle={styles.content}>
       <View style={styles.header}>
@@ -21,14 +22,14 @@ export default function DriverTripRequestScreen() {
 
       <Card style={styles.requestCard}>
         <View style={styles.driverPill}>
-          <Text style={styles.driverPillText}>{assignedDemoDriver.eta} away</Text>
+          <Text style={styles.driverPillText}>{driver?.eta} away</Text>
         </View>
 
         <View style={styles.routeRow}>
           <View style={styles.pickupMarker} />
           <View style={styles.routeCopy}>
             <Text style={styles.routeLabel}>Passenger pickup</Text>
-            <Text style={styles.routeValue}>{demoPickup}</Text>
+            <Text style={styles.routeValue}>{trip.pickup.address}</Text>
           </View>
         </View>
 
@@ -38,24 +39,25 @@ export default function DriverTripRequestScreen() {
           <View style={styles.destinationMarker} />
           <View style={styles.routeCopy}>
             <Text style={styles.routeLabel}>Destination</Text>
-            <Text style={styles.routeValue}>{demoDestination.displayName}</Text>
+            <Text style={styles.routeValue}>{trip.destination.address}</Text>
           </View>
         </View>
       </Card>
 
       <Card style={styles.detailsCard}>
-        <DetailRow label="Fare" value={demoFare.displayAmountWithCurrency} />
-        <DetailRow label="ETA" value={assignedDemoDriver.eta} />
+        <DetailRow label="Fare" value={trip.fare.displayAmountWithCurrency} />
+        <DetailRow label="ETA" value={driver?.eta ?? '4 min'} />
       </Card>
 
       <View style={styles.actions}>
         <PrimaryButton
           onPress={() => {
+            setDriverState('accepted');
             router.push({
               pathname: '/driver-active-trip',
               params: {
-                ...toDestinationRouteParams(demoDestination),
-                ...toFareRouteParams(demoFare),
+                ...toDestinationRouteParams(selectedDestination),
+                ...toFareRouteParams(trip.fare),
               },
             });
           }}
@@ -66,7 +68,10 @@ export default function DriverTripRequestScreen() {
         </PrimaryButton>
 
         <SecondaryButton
-          onPress={() => router.replace('/driver-home')}
+          onPress={() => {
+            setDriverState('waiting');
+            router.replace('/driver-home');
+          }}
           pressedStyle={styles.buttonPressed}
           style={styles.declineButton}
           textStyle={styles.declineButtonText}>

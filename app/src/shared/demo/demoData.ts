@@ -1,3 +1,7 @@
+import { getActiveCompany } from '@/domains/company';
+
+const activeCompany = getActiveCompany();
+
 export type DemoDriver = {
   color: string;
   eta: string;
@@ -11,14 +15,18 @@ export type DemoDriver = {
 
 export const demoArnpriorLocalFare = {
   amountCents: 1000,
-  currency: 'CAD',
+  currency: activeCompany.currency,
   displayAmount: '$10.00',
-  displayAmountWithCurrency: '$10.00 CAD',
+  displayAmountWithCurrency: `$10.00 ${activeCompany.currency}`,
 };
 
 export const demoCompany = {
-  name: 'Murrys Taxi',
-  phoneNumber: '+16132959335',
+  email: activeCompany.supportEmail,
+  name: activeCompany.name,
+  phoneNumber: activeCompany.supportPhone,
+  serviceArea: activeCompany.serviceArea,
+  shortName: activeCompany.shortName,
+  website: activeCompany.website,
   webSupportPhoneNumber: '+16135550100',
 };
 
@@ -30,7 +38,7 @@ export type DemoCustomerProfile = {
 
 let demoCustomerProfile: DemoCustomerProfile = {
   email: 'rider@murrystaxi.demo',
-  name: 'Murrys Rider',
+  name: `${activeCompany.shortName} Rider`,
   phone: '+1 613 555 0101',
 };
 
@@ -115,7 +123,7 @@ export type DemoFavouritePlace = {
 
 let demoFavouritePlaces: DemoFavouritePlace[] = [
   {
-    address: 'Arnprior, Ontario',
+    address: activeCompany.serviceArea,
     id: 'home',
     label: 'Home',
   },

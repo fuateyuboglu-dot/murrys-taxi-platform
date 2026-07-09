@@ -2,13 +2,11 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { Alert, Linking, Platform, StyleSheet, Text, View } from 'react-native';
 
 import { Card, PrimaryButton, ScreenContainer, SecondaryButton } from '@/shared/components';
-import { createDemoUserLocation, getRouteMetricsFromParams } from '@/domains/locations';
+import { setDriverState } from '@/domains/drivers';
 import { getSelectedDestinationFromParams, toDestinationRouteParams } from '@/domains/places';
-import { calculateFare, getFareFromParams, toFareRouteParams } from '@/domains/pricing';
-import { demoPassenger } from '@/shared/demo/driverTripDemo';
+import { toFareRouteParams } from '@/domains/pricing';
+import { getDemoTripFromParams, type TripCustomer } from '@/domains/trips';
 import { colors, radius, spacing } from '@/shared/theme';
-
-const demoPickup = createDemoUserLocation().addressLabel ?? 'Current Location';
 
 function showPassengerAlert(message: string) {
   if (Platform.OS === 'web' && typeof globalThis.alert === 'function') {
@@ -19,34 +17,28 @@ function showPassengerAlert(message: string) {
   Alert.alert('Passenger contact', message);
 }
 
-async function callPassenger() {
+async function callPassenger(customer: TripCustomer) {
   if (Platform.OS === 'web') {
-    showPassengerAlert(`Call ${demoPassenger.name}: ${demoPassenger.phoneNumber}`);
+    showPassengerAlert(`Call ${customer.name}: ${customer.phoneNumber}`);
     return;
   }
 
-  await Linking.openURL(`tel:${demoPassenger.phoneNumber}`);
+  await Linking.openURL(`tel:${customer.phoneNumber}`);
 }
 
-async function messagePassenger() {
+async function messagePassenger(customer: TripCustomer) {
   if (Platform.OS === 'web') {
-    showPassengerAlert(`Message ${demoPassenger.name}: ${demoPassenger.phoneNumber}`);
+    showPassengerAlert(`Message ${customer.name}: ${customer.phoneNumber}`);
     return;
   }
 
-  await Linking.openURL(`sms:${demoPassenger.phoneNumber}`);
+  await Linking.openURL(`sms:${customer.phoneNumber}`);
 }
 
 export default function DriverPickupScreen() {
   const routeParams = useLocalSearchParams();
   const selectedDestination = getSelectedDestinationFromParams(routeParams);
-  const routeMetrics = getRouteMetricsFromParams(routeParams);
-  const fareEstimate = routeParams.fareAmountCents
-    ? getFareFromParams(routeParams)
-    : calculateFare({
-        destination: selectedDestination,
-        distanceMeters: routeMetrics.distanceMeters,
-      });
+  const trip = getDemoTripFromParams(routeParams);
 
   return (
     <ScreenContainer contentStyle={styles.content}>
@@ -57,13 +49,13 @@ export default function DriverPickupScreen() {
 
       <Card style={styles.passengerCard}>
         <Text style={styles.passengerLabel}>Passenger</Text>
-        <Text style={styles.passengerName}>{demoPassenger.name}</Text>
+        <Text style={styles.passengerName}>{trip.customer.name}</Text>
       </Card>
 
       <Card style={styles.routeCard}>
-        <RouteRow label="Pickup address" marker="pickup" value={demoPickup} />
+        <RouteRow label="Pickup address" marker="pickup" value={trip.pickup.address} />
         <View style={styles.divider} />
-        <RouteRow label="Destination" marker="destination" value={selectedDestination.displayName} />
+        <RouteRow label="Destination" marker="destination" value={trip.destination.address} />
       </Card>
 
       <Card style={styles.timerCard}>
@@ -74,7 +66,7 @@ export default function DriverPickupScreen() {
       <View style={styles.quickActions}>
         <SecondaryButton
           onPress={() => {
-            void callPassenger();
+            void callPassenger(trip.customer);
           }}
           pressedStyle={styles.buttonPressed}
           style={styles.secondaryButton}
@@ -83,7 +75,7 @@ export default function DriverPickupScreen() {
         </SecondaryButton>
         <SecondaryButton
           onPress={() => {
-            void messagePassenger();
+            void messagePassenger(trip.customer);
           }}
           pressedStyle={styles.buttonPressed}
           style={styles.secondaryButton}
@@ -94,13 +86,14 @@ export default function DriverPickupScreen() {
 
       <PrimaryButton
         onPress={() => {
+          setDriverState('in_progress');
           router.push({
             pathname: '/driver-driving',
             params: {
               ...toDestinationRouteParams(selectedDestination),
-              ...toFareRouteParams(fareEstimate),
-              routeDistanceMeters: routeMetrics.distanceMeters ? String(routeMetrics.distanceMeters) : undefined,
-              routeDurationSeconds: routeMetrics.durationSeconds ? String(routeMetrics.durationSeconds) : undefined,
+              ...toFareRouteParams(trip.fare),
+              routeDistanceMeters: trip.route.distanceMeters ? String(trip.route.distanceMeters) : undefined,
+              routeDurationSeconds: trip.route.durationSeconds ? String(trip.route.durationSeconds) : undefined,
             },
           });
         }}

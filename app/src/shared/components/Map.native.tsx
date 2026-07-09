@@ -2,6 +2,7 @@ import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 
 import type { Coordinates, DestinationLocation, DriverLocation, Route, UserLocation } from '@/domains/locations';
+import { getActiveCompany } from '@/domains/company';
 import { colors, radius, spacing } from '@/shared/theme';
 
 type MapVariant = 'home' | 'liveTrip';
@@ -26,7 +27,7 @@ const ARNPRIOR_REGION = {
   longitudeDelta: 0.045,
 };
 
-const MURRYS_TAXI_HQ: Coordinates = {
+const COMPANY_HQ_COORDINATES: Coordinates = {
   latitude: 45.4334,
   longitude: -76.3518,
 };
@@ -81,6 +82,7 @@ export function Map({
   userLocation,
   variant = 'home',
 }: MapProps) {
+  const company = getActiveCompany();
   const isLiveTrip = variant === 'liveTrip';
   const mapRegion = getMapRegion(userLocation, destinationLocation, driverLocation);
   const routeCoordinates = route?.waypoints.length ? route.waypoints : undefined;
@@ -95,7 +97,7 @@ export function Map({
         showsCompass={false}
         showsMyLocationButton={false}
         style={styles.map}>
-        <Marker coordinate={MURRYS_TAXI_HQ} title="Murrys Taxi HQ" />
+        <Marker coordinate={COMPANY_HQ_COORDINATES} title={`${company.name} HQ`} />
 
         {userLocation ? (
           <Marker

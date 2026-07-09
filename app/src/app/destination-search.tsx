@@ -12,14 +12,16 @@ import {
 import { colors, radius, spacing } from '@/shared/theme';
 import { Card, ListRow, ScreenContainer, SectionTitle } from '@/shared/components';
 import { getDemoFavouritePlaces } from '@/shared/demo/demoData';
+import { getActiveCompany } from '@/domains/company';
 
 
 const recentDestinations = ['Arnprior Shopping Centre', 'Nick Smith Centre', 'Robert Simpson Park'];
 const suggestedLocations = ['Downtown Arnprior', 'Arnprior Regional Health', 'Daniel Street South'];
-const searchResults = ['Murrys Taxi Office', 'Ottawa Street', 'Madawaska Boulevard'];
 
 export default function DestinationSearchScreen() {
+  const company = getActiveCompany();
   const favouritePlaces = getDemoFavouritePlaces();
+  const searchResults = [`${company.name} Office`, 'Ottawa Street', 'Madawaska Boulevard'];
   const [addressResults, setAddressResults] = useState<AddressSearchResult[]>(() => placesService.searchDemoAddresses(''));
   const [query, setQuery] = useState('');
   const trimmedQuery = query.trim();
@@ -241,7 +243,7 @@ type LocationRowProps = {
   title: string;
 };
 
-function LocationRow({ marker, onPress, showDivider, subtitle = 'Arnprior and Area', title }: LocationRowProps) {
+function LocationRow({ marker, onPress, showDivider, subtitle = getActiveCompany().serviceArea, title }: LocationRowProps) {
   return (
     <ListRow
       divider={showDivider ? <View style={styles.divider} /> : null}

@@ -3,9 +3,12 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Card, ScreenContainer } from '@/shared/components';
 import { demoPaymentMethods } from '@/shared/demo/demoData';
+import { getActiveCompany } from '@/domains/company';
 import { colors, radius, spacing } from '@/shared/theme';
 
 export default function PaymentMethodsScreen() {
+  const company = getActiveCompany();
+
   return (
     <ScreenContainer contentStyle={styles.content}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -25,7 +28,7 @@ export default function PaymentMethodsScreen() {
 
         <Card style={styles.infoCard}>
           <Text style={styles.infoTitle}>Current method</Text>
-          <Text style={styles.infoText}>Murrys Taxi demo bookings use pay in car only.</Text>
+          <Text style={styles.infoText}>{company.name} demo bookings use pay in car only.</Text>
         </Card>
 
         <Card style={styles.listCard}>

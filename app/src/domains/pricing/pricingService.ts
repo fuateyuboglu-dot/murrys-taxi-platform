@@ -1,4 +1,5 @@
 import type { SelectedDestination } from '@/domains/places';
+import { getActiveCompany } from '@/domains/company';
 
 const LOCAL_FARE_CENTS = 1000;
 const AIRPORT_FARE_CENTS = 12000;
@@ -25,13 +26,14 @@ export type CalculateFareInput = {
 };
 
 function formatFare(amountCents: number, fareType: FareEstimate['fareType']): FareEstimate {
+  const company = getActiveCompany();
   const displayAmount = `$${(amountCents / 100).toFixed(2)}`;
 
   return {
     amountCents,
-    currency: 'CAD',
+    currency: company.currency,
     displayAmount,
-    displayAmountWithCurrency: `${displayAmount} CAD`,
+    displayAmountWithCurrency: `${displayAmount} ${company.currency}`,
     fareType,
   };
 }

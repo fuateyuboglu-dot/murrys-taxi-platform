@@ -3,15 +3,13 @@ import { useEffect, useState } from 'react';
 import { Alert, Linking, Platform, StyleSheet, Text, View } from 'react-native';
 
 import { Card, PrimaryButton, ScreenContainer, SecondaryButton } from '@/shared/components';
-import { assignedDemoDriver } from '@/shared/demo/demoData';
-import { demoPassenger, formatDemoRouteDistance, formatDemoRouteDuration } from '@/shared/demo/driverTripDemo';
+import { setDriverState } from '@/domains/drivers';
+import { formatDemoRouteDistance, formatDemoRouteDuration } from '@/shared/demo/driverTripDemo';
 import { getSelectedDestinationFromParams, toDestinationRouteParams } from '@/domains/places';
-import { calculateFare, getFareFromParams, toFareRouteParams } from '@/domains/pricing';
-import { createDemoUserLocation, locationService, toRouteMetricParams, type Route } from '@/domains/locations';
+import { calculateFare, toFareRouteParams } from '@/domains/pricing';
+import { locationService, toRouteMetricParams, type Route } from '@/domains/locations';
+import { getDemoTripFromParams, type TripCustomer } from '@/domains/trips';
 import { colors, radius, spacing } from '@/shared/theme';
-
-const demoPickupLocation = createDemoUserLocation();
-const demoPickup = demoPickupLocation.addressLabel ?? 'Current Location';
 
 function showPassengerAlert(message: string) {
   if (Platform.OS === 'web' && typeof globalThis.alert === 'function') {
@@ -22,41 +20,43 @@ function showPassengerAlert(message: string) {
   Alert.alert('Passenger contact', message);
 }
 
-async function callPassenger() {
+async function callPassenger(customer: TripCustomer) {
   if (Platform.OS === 'web') {
-    showPassengerAlert(`Call ${demoPassenger.name}: ${demoPassenger.phoneNumber}`);
+    showPassengerAlert(`Call ${customer.name}: ${customer.phoneNumber}`);
     return;
   }
 
-  await Linking.openURL(`tel:${demoPassenger.phoneNumber}`);
+  await Linking.openURL(`tel:${customer.phoneNumber}`);
 }
 
-async function messagePassenger() {
+async function messagePassenger(customer: TripCustomer) {
   if (Platform.OS === 'web') {
-    showPassengerAlert(`Message ${demoPassenger.name}: ${demoPassenger.phoneNumber}`);
+    showPassengerAlert(`Message ${customer.name}: ${customer.phoneNumber}`);
     return;
   }
 
-  await Linking.openURL(`sms:${demoPassenger.phoneNumber}`);
+  await Linking.openURL(`sms:${customer.phoneNumber}`);
 }
 
 export default function DriverActiveTripScreen() {
   const routeParams = useLocalSearchParams();
   const selectedDestination = getSelectedDestinationFromParams(routeParams);
+  const trip = getDemoTripFromParams(routeParams);
+  const driver = trip.driver;
   const [route, setRoute] = useState<Route | null>(null);
   const destinationCoordinates = selectedDestination.coordinates;
   const destinationLatitude = destinationCoordinates?.latitude;
   const destinationLongitude = destinationCoordinates?.longitude;
+  const pickupLatitude = trip.pickup.coordinates?.latitude;
+  const pickupLongitude = trip.pickup.coordinates?.longitude;
   const fareEstimate = route
     ? calculateFare({
         destination: selectedDestination,
         distanceMeters: route.distanceMeters,
       })
-    : routeParams.fareAmountCents
-      ? getFareFromParams(routeParams)
-      : calculateFare({ destination: selectedDestination });
+    : trip.fare;
   const distanceLabel = formatDemoRouteDistance(route?.distanceMeters);
-  const durationLabel = formatDemoRouteDuration(route?.durationSeconds, assignedDemoDriver.eta);
+  const durationLabel = formatDemoRouteDuration(route?.durationSeconds, driver?.eta ?? '4 min');
 
   useEffect(() => {
     let isMounted = true;
@@ -68,8 +68,18 @@ export default function DriverActiveTripScreen() {
       return;
     }
 
+    if (
+      typeof pickupLatitude !== 'number' ||
+      typeof pickupLongitude !== 'number'
+    ) {
+      return;
+    }
+
     void locationService
-      .getRoute(demoPickupLocation.coordinates, {
+      .getRoute({
+        latitude: pickupLatitude,
+        longitude: pickupLongitude,
+      }, {
         latitude: destinationLatitude,
         longitude: destinationLongitude,
       })
@@ -82,7 +92,7 @@ export default function DriverActiveTripScreen() {
     return () => {
       isMounted = false;
     };
-  }, [destinationLatitude, destinationLongitude]);
+  }, [destinationLatitude, destinationLongitude, pickupLatitude, pickupLongitude]);
 
   return (
     <ScreenContainer contentStyle={styles.content}>
@@ -93,11 +103,11 @@ export default function DriverActiveTripScreen() {
 
       <Card style={styles.passengerCard}>
         <View style={styles.avatar}>
-          <Text style={styles.avatarText}>S</Text>
+          <Text style={styles.avatarText}>{trip.customer.name.charAt(0)}</Text>
         </View>
         <View style={styles.passengerCopy}>
           <Text style={styles.passengerLabel}>Passenger</Text>
-          <Text style={styles.passengerName}>{demoPassenger.name}</Text>
+          <Text style={styles.passengerName}>{trip.customer.name}</Text>
         </View>
       </Card>
 
@@ -106,7 +116,7 @@ export default function DriverActiveTripScreen() {
           <View style={styles.pickupMarker} />
           <View style={styles.routeCopy}>
             <Text style={styles.routeLabel}>Pickup address</Text>
-            <Text style={styles.routeValue}>{demoPickup}</Text>
+            <Text style={styles.routeValue}>{trip.pickup.address}</Text>
           </View>
         </View>
 
@@ -116,7 +126,7 @@ export default function DriverActiveTripScreen() {
           <View style={styles.destinationMarker} />
           <View style={styles.routeCopy}>
             <Text style={styles.routeLabel}>Destination address</Text>
-            <Text style={styles.routeValue}>{selectedDestination.displayName}</Text>
+            <Text style={styles.routeValue}>{trip.destination.address}</Text>
           </View>
         </View>
       </Card>
@@ -130,7 +140,7 @@ export default function DriverActiveTripScreen() {
       <View style={styles.quickActions}>
         <SecondaryButton
           onPress={() => {
-            void callPassenger();
+            void callPassenger(trip.customer);
           }}
           pressedStyle={styles.buttonPressed}
           style={styles.secondaryButton}
@@ -139,7 +149,7 @@ export default function DriverActiveTripScreen() {
         </SecondaryButton>
         <SecondaryButton
           onPress={() => {
-            void messagePassenger();
+            void messagePassenger(trip.customer);
           }}
           pressedStyle={styles.buttonPressed}
           style={styles.secondaryButton}
@@ -150,6 +160,7 @@ export default function DriverActiveTripScreen() {
 
       <PrimaryButton
         onPress={() => {
+          setDriverState('waiting_for_passenger');
           router.push({
             pathname: '/driver-pickup',
             params: {

@@ -3,29 +3,38 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Card, PrimaryButton, ScreenContainer } from '@/shared/components';
-import { assignedDemoDriver } from '@/shared/demo/demoData';
+import { getDriverState, getDriverStateLabel, setDriverState, type DriverState } from '@/domains/drivers';
+import { getDemoTrip } from '@/domains/trips';
 import { colors, radius, spacing } from '@/shared/theme';
 
 export default function DriverHomeScreen() {
-  const [isOnline, setIsOnline] = useState(false);
+  const [driverState, setDriverStateView] = useState<DriverState>(() => getDriverState());
+  const trip = getDemoTrip();
+  const driver = trip.driver;
+  const isOnline = driverState !== 'offline';
+
+  function toggleDriverState() {
+    const nextState = setDriverState(isOnline ? 'offline' : 'waiting');
+    setDriverStateView(nextState);
+  }
 
   return (
     <ScreenContainer contentStyle={styles.content}>
       <View style={styles.header}>
         <Text style={styles.eyebrow}>Driver App</Text>
-        <Text style={styles.title}>Welcome, {assignedDemoDriver.name}</Text>
+        <Text style={styles.title}>Welcome, {driver?.name}</Text>
       </View>
 
       <Card style={styles.driverCard}>
         <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{assignedDemoDriver.name.charAt(0)}</Text>
+          <Text style={styles.avatarText}>{driver?.name.charAt(0)}</Text>
         </View>
         <View style={styles.driverCopy}>
-          <Text style={styles.driverName}>{assignedDemoDriver.name}</Text>
+          <Text style={styles.driverName}>{driver?.name}</Text>
           <Text style={styles.vehicle}>
-            {assignedDemoDriver.color} {assignedDemoDriver.vehicle}
+            {driver?.color} {driver?.vehicle}
           </Text>
-          <Text style={styles.plate}>{assignedDemoDriver.plate}</Text>
+          <Text style={styles.plate}>{driver?.plate}</Text>
         </View>
       </Card>
 
@@ -33,13 +42,13 @@ export default function DriverHomeScreen() {
         <View style={styles.statusTopRow}>
           <View>
             <Text style={styles.statusLabel}>Driver status</Text>
-            <Text style={styles.statusTitle}>{isOnline ? 'Online' : 'Offline'}</Text>
+            <Text style={styles.statusTitle}>{getDriverStateLabel(driverState)}</Text>
           </View>
           <Pressable
             accessibilityLabel="Toggle driver online status"
             accessibilityRole="switch"
             accessibilityState={{ checked: isOnline }}
-            onPress={() => setIsOnline((currentValue) => !currentValue)}
+            onPress={toggleDriverState}
             style={({ pressed }) => [
               styles.toggle,
               isOnline ? styles.toggleOnline : null,
@@ -58,7 +67,10 @@ export default function DriverHomeScreen() {
       </Card>
 
       <PrimaryButton
-        onPress={() => router.push('/driver-trip-request')}
+        onPress={() => {
+          setDriverState('trip_requested');
+          router.push('/driver-trip-request');
+        }}
         pressedStyle={styles.buttonPressed}
         style={styles.primaryButton}
         textStyle={styles.primaryButtonText}>

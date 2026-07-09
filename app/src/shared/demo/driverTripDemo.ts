@@ -1,6 +1,8 @@
+import { demoTripCustomer } from '@/domains/trips';
+
 export const demoPassenger = {
-  name: 'Sarah Johnson',
-  phoneNumber: '+16135550102',
+  name: demoTripCustomer.name,
+  phoneNumber: demoTripCustomer.phoneNumber,
 };
 
 export function formatDemoRouteDuration(durationSeconds: number | undefined, fallback = '4 min') {

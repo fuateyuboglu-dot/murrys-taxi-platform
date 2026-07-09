@@ -1,11 +1,13 @@
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Card, CustomerBottomTabs, ScreenContainer } from '@/shared/components';
-import { demoArnpriorLocalFare, getScheduledDemoBooking } from '@/shared/demo/demoData';
+import { getScheduledDemoBooking } from '@/shared/demo/demoData';
+import { getDemoTrip } from '@/domains/trips';
 import { colors, radius, spacing } from '@/shared/theme';
 
 export default function BookingsScreen() {
   const scheduledBooking = getScheduledDemoBooking();
+  const trip = getDemoTrip();
 
   return (
     <ScreenContainer contentStyle={styles.content}>
@@ -39,10 +41,10 @@ export default function BookingsScreen() {
                 <Text style={styles.historyIconText}>M</Text>
               </View>
               <View style={styles.historyCopy}>
-                <Text style={styles.historyTitle}>Arnprior Shopping Centre</Text>
-                <Text style={styles.historyMeta}>Standard Taxi • Pay in car</Text>
+                <Text style={styles.historyTitle}>{trip.destination.address}</Text>
+                <Text style={styles.historyMeta}>Standard Taxi • {trip.paymentMethod.label}</Text>
               </View>
-              <Text style={styles.historyFare}>{demoArnpriorLocalFare.displayAmountWithCurrency}</Text>
+              <Text style={styles.historyFare}>{trip.fare.displayAmountWithCurrency}</Text>
             </View>
           </Card>
         </View>

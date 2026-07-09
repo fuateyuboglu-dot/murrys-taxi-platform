@@ -2,18 +2,20 @@ import { router } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Card, ScreenContainer } from '@/shared/components';
+import { getActiveCompany } from '@/domains/company';
 import { colors, radius, spacing } from '@/shared/theme';
 
-const settingsRows = [
-  { label: 'Notifications', value: 'On' },
-  { label: 'Language', value: 'English' },
-  { label: 'About Murrys Taxi', value: 'Demo app' },
-  { label: 'Privacy Policy', value: 'Demo only' },
-  { label: 'Terms of Service', value: 'Demo only' },
-  { isDisabled: true, label: 'Dark Mode', value: 'Coming Soon' },
-];
-
 export default function SettingsScreen() {
+  const company = getActiveCompany();
+  const settingsRows = [
+    { label: 'Notifications', value: 'On' },
+    { label: 'Language', value: 'English' },
+    { label: `About ${company.name}`, value: 'Demo app' },
+    { label: 'Privacy Policy', value: 'Demo only' },
+    { label: 'Terms of Service', value: 'Demo only' },
+    { isDisabled: true, label: 'Dark Mode', value: 'Coming Soon' },
+  ];
+
   return (
     <ScreenContainer contentStyle={styles.content}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>

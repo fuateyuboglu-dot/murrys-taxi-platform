@@ -2,9 +2,12 @@ import { router } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 import { colors, radius, spacing } from '@/shared/theme';
 import { Card, PrimaryButton, ScreenContainer } from '@/shared/components';
+import { getActiveCompany } from '@/domains/company';
 
 
 export default function WelcomeScreen() {
+  const company = getActiveCompany();
+
   return (
     <ScreenContainer contentStyle={styles.content}>
         <View style={styles.hero}>
@@ -12,11 +15,11 @@ export default function WelcomeScreen() {
             <View style={styles.brandMark}>
               <Text style={styles.brandInitial}>M</Text>
             </View>
-            <Text style={styles.serviceArea}>Serving Arnprior and Area</Text>
+            <Text style={styles.serviceArea}>Serving {company.serviceArea}</Text>
           </Card>
 
           <View style={styles.heroCopy}>
-            <Text style={styles.appName}>Murrys Taxi</Text>
+            <Text style={styles.appName}>{company.name}</Text>
             <Text style={styles.tagline}>Fast • Safe • Local</Text>
           </View>
         </View>
